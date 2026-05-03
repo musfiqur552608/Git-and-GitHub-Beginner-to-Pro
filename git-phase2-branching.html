@@ -53,6 +53,10 @@ header{
 .htag.hi{border-color:rgba(59,158,255,.25);color:var(--blue);background:var(--blue-s)}
 .hprog-wrap{position:fixed;top:var(--hh);left:0;right:0;z-index:199;height:2px;background:var(--border)}
 .hprog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));width:0%;transition:width .3s}
+.top-nav{display:flex;gap:10px;align-items:center;margin-left:1rem}
+.top-nav .nav-link{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:13px;border:0.5px solid transparent}
+.top-nav .nav-link:hover{background:var(--bg3);color:var(--text)}
+.top-nav .nav-link.active{background:var(--blue-s);color:var(--blue);border-color:var(--blue-s)}
 
 /* ── LAYOUT ── */
 .layout{display:flex;padding-top:calc(var(--hh)+2px);min-height:100vh}
@@ -322,10 +326,15 @@ main{margin-left:var(--sw);flex:1;max-width:900px;padding:2.5rem 2.5rem 5rem}
 <body>
 
 <header>
-  <a class="hbrand" href="#">
+  <a class="hbrand" href="index.html">
     <div class="hlogo">🌿</div>
     <span class="hname"><span>git</span> / phase-2</span>
   </a>
+  <nav class="top-nav">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link active" href="git-phase2-branching.html">Phase 2</a>
+    <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
+  </nav>
   <div class="hfill"></div>
   <div class="htag hi">branching & merging</div>
   <div class="htag">weeks 3–4</div>

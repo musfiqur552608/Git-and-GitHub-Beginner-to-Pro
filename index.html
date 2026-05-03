@@ -98,6 +98,10 @@ header {
   background: var(--bg2);
 }
 .hpill.active { border-color: var(--or-soft); color: var(--or); background: var(--or-soft); }
+.top-nav{display:flex;gap:10px;align-items:center;margin-left:1rem}
+.top-nav .nav-link{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:13px;border:0.5px solid transparent}
+.top-nav .nav-link:hover{background:var(--bg3);color:var(--text)}
+.top-nav .nav-link.active{background:var(--or-soft);color:var(--or);border-color:var(--or-soft)}
 .progress-bar-wrap {
   position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 99;
   height: 2px; background: var(--border);
@@ -841,17 +845,22 @@ main {
 
   <!-- SIDEBAR -->
   <aside>
-    <div class="sidebar-label">lessons</div>
-    <div class="sidebar-section">
-      <button class="nav-item active" onclick="showLesson(0)" id="nav0">
-        <span class="nav-num">1</span>
-        <span class="nav-text">What is Git?</span>
-      </button>
-      <button class="nav-item" onclick="showLesson(1)" id="nav1">
-        <span class="nav-num">2</span>
-        <span class="nav-text">Install &amp; Config</span>
-      </button>
-      <button class="nav-item" onclick="showLesson(2)" id="nav2">
+    <a class="hbrand" href="index.html">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2L2 7v7c0 5 4 9 10 9s10-4 10-9V7l-10-5z"/></svg>
+      </div>
+      <span class="brand-name"><span>git</span> / phase-1</span>
+    </a>
+    <nav class="top-nav">
+      <a class="nav-link active" href="index.html">Home</a>
+      <a class="nav-link" href="git-phase2-branching.html">Phase 2</a>
+      <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
+    </nav>
+    <div class="header-sep"></div>
+    <div class="header-pills">
+      <div class="hpill">Begin</div>
+      <div class="hpill active">Overview</div>
+    </div>
         <span class="nav-num">3</span>
         <span class="nav-text">init, clone &amp; working dir</span>
       </button>
