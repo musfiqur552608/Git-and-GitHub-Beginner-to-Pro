@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Phase 1 — The Foundation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d0d0f;
+  --bg2:      #131316;
+  --bg3:      #1a1a1f;
+  --bg4:      #222228;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #e8e6e0;
+  --text2:    #9a9890;
+  --text3:    #5c5a56;
+  --or:       #F05133;
+  --or2:      #ff6b4a;
+  --or-soft:  rgba(240,81,51,0.12);
+  --or-glow:  rgba(240,81,51,0.06);
+  --green:    #3fb950;
+  --green-s:  rgba(63,185,80,0.12);
+  --blue:     #58a6ff;
+  --blue-s:   rgba(88,166,255,0.12);
+  --yellow:   #e3b341;
+  --yellow-s: rgba(227,179,65,0.12);
+  --red:      #f85149;
+  --red-s:    rgba(248,81,73,0.12);
+  --purple:   #bc8cff;
+  --mono:     'JetBrains Mono', 'Fira Code', monospace;
+  --serif:    'Fraunces', Georgia, serif;
+  --sidebar-w: 260px;
+  --header-h:  56px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+/* ── HEADER ────────────────────────────────────────────── */
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--header-h);
+  background: rgba(13,13,15,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+}
+.header-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.brand-icon {
+  width: 28px; height: 28px;
+  background: var(--or);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.brand-icon svg { width: 16px; height: 16px; fill: white; }
+.brand-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.brand-name span { color: var(--or); }
+.header-sep { flex: 1; }
+.header-pills { display: flex; gap: 6px; align-items: center; }
+.hpill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 0.5px solid var(--border);
+  color: var(--text3);
+  background: var(--bg2);
+}
+.hpill.active { border-color: var(--or-soft); color: var(--or); background: var(--or-soft); }
+.progress-bar-wrap {
+  position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 99;
+  height: 2px; background: var(--border);
+}
+.progress-bar-fill {
+  height: 100%; background: var(--or);
+  width: 0%; transition: width 0.3s ease;
+}
+
+/* ── LAYOUT ────────────────────────────────────────────── */
+.layout {
+  display: flex;
+  padding-top: calc(var(--header-h) + 2px);
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ────────────────────────────────────────────── */
+aside {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: calc(var(--header-h) + 2px);
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  border-right: 0.5px solid var(--border);
+  background: var(--bg);
+  padding: 1.5rem 0 2rem;
+}
+.sidebar-section {
+  padding: 0 1rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.sidebar-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 0 0.75rem;
+  margin-bottom: 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: var(--text2);
+  font-size: 12px;
+  border: none; background: transparent; width: 100%; text-align: left;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--or-soft); color: var(--or); }
+.nav-item.done { color: var(--green); }
+.nav-item.done .nav-dot { background: var(--green); }
+.nav-num {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 500;
+  color: var(--text3);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.nav-item.active .nav-num { background: var(--or-soft); color: var(--or); }
+.nav-item.done .nav-num { background: var(--green-s); color: var(--green); }
+.nav-text { flex: 1; line-height: 1.3; }
+
+.sidebar-progress {
+  margin: 1rem 1rem 0;
+  padding: 12px 14px;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+}
+.sp-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.sp-bar { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.sp-fill { height: 100%; background: var(--or); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+
+/* ── MAIN CONTENT ───────────────────────────────────────── */
+main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  max-width: 860px;
+  padding: 2.5rem 2.5rem 4rem;
+}
+
+/* ── LESSON SECTIONS ────────────────────────────────────── */
+.lesson-section {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.lesson-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.lesson-hero {
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  background: var(--bg2);
+  position: relative;
+  overflow: hidden;
+}
+.lesson-hero::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle at top right, var(--or-glow), transparent 70%);
+  pointer-events: none;
+}
+.lesson-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--or);
+  margin-bottom: 0.5rem;
+}
+.lesson-hero h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+.lesson-hero p {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 560px;
+}
+.lesson-meta-row {
+  display: flex; gap: 12px; margin-top: 1.25rem; flex-wrap: wrap;
+}
+.meta-pill {
+  font-size: 11px;
+  padding: 3px 12px;
+  border-radius: 12px;
+  border: 0.5px solid var(--border);
+  color: var(--text2);
+}
+.meta-pill.orange { border-color: var(--or-soft); color: var(--or); background: var(--or-soft); }
+.meta-pill.green { border-color: var(--green-s); color: var(--green); background: var(--green-s); }
+
+/* ── CONTENT BLOCKS ─────────────────────────────────────── */
+.content-block {
+  margin-bottom: 2rem;
+}
+.block-title {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.block-title::after {
+  content: '';
+  flex: 1; height: 0.5px;
+  background: var(--border);
+}
+
+.prose {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+.prose strong { color: var(--text); font-weight: 500; }
+.prose code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--or);
+}
+
+/* ── CODE BLOCKS ────────────────────────────────────────── */
+.code-block {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.code-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg3);
+  border-bottom: 0.5px solid var(--border);
+}
+.code-dots { display: flex; gap: 5px; }
+.code-dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-dot.r { background: #ff5f57; }
+.code-dot.y { background: #ffbd2e; }
+.code-dot.g { background: #28c940; }
+.code-filename {
+  font-size: 11px; color: var(--text3);
+  margin-left: 4px;
+}
+.code-copy {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text3);
+  background: none; border: none; cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.code-copy:hover { background: var(--bg4); color: var(--text2); }
+.code-body {
+  padding: 1rem 1.25rem;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: pre;
+}
+.c-prompt { color: var(--or); user-select: none; }
+.c-cmd    { color: #e8e6e0; }
+.c-arg    { color: var(--blue); }
+.c-str    { color: var(--yellow); }
+.c-out    { color: var(--text3); }
+.c-ok     { color: var(--green); }
+.c-err    { color: var(--red); }
+.c-comment{ color: var(--text3); font-style: italic; }
+.c-key    { color: var(--purple); }
+
+/* ── 3-STATES VISUALIZER ─────────────────────────────────── */
+.states-viz {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.states-header {
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 0.5px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.states-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 0;
+  background: var(--bg2);
+  align-items: center;
+  padding: 1.5rem 1rem;
+}
+.state-box {
+  padding: 1rem;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg3);
+  text-align: center;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.state-box:hover { border-color: var(--border2); }
+.state-box.working { border-color: rgba(88,166,255,0.3); background: var(--blue-s); }
+.state-box.staging { border-color: rgba(227,179,65,0.3); background: var(--yellow-s); }
+.state-box.repo    { border-color: rgba(63,185,80,0.3);  background: var(--green-s); }
+.state-icon { font-size: 22px; margin-bottom: 6px; }
+.state-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.state-sub  { font-size: 10px; color: var(--text3); line-height: 1.4; }
+.state-cmd  {
+  font-size: 11px;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--bg4);
+  color: var(--or);
+  display: inline-block;
+}
+.state-arrow {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 0 8px;
+}
+.arrow-line {
+  width: 40px; height: 1.5px;
+  background: linear-gradient(to right, var(--border2), var(--or));
+  position: relative;
+}
+.arrow-line::after {
+  content: '';
+  position: absolute; right: -4px; top: -3px;
+  border-left: 7px solid var(--or);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+.arrow-label { font-size: 10px; color: var(--or); }
+
+.states-files {
+  display: flex; gap: 8px; padding: 1rem;
+  border-top: 0.5px solid var(--border);
+  flex-wrap: wrap; background: var(--bg2);
+}
+.file-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  background: var(--bg3);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.file-chip .fc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.file-chip.untracked { border-color: rgba(88,166,255,0.25); }
+.file-chip.untracked .fc-dot { background: var(--blue); }
+.file-chip.staged    { border-color: rgba(227,179,65,0.25); }
+.file-chip.staged    .fc-dot { background: var(--yellow); }
+.file-chip.committed { border-color: rgba(63,185,80,0.25); }
+.file-chip.committed .fc-dot { background: var(--green); }
+.file-legend {
+  display: flex; gap: 12px;
+  font-size: 10px; color: var(--text3);
+  align-items: center;
+  padding: 6px 1rem 0.75rem;
+  background: var(--bg2);
+}
+.fl-item { display: flex; align-items: center; gap: 5px; }
+.fl-dot  { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── TERMINAL SIMULATOR ─────────────────────────────────── */
+.terminal {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+}
+.term-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-bottom: 0.5px solid var(--border);
+}
+.term-dots { display: flex; gap: 5px; }
+.term-dot  { width: 10px; height: 10px; border-radius: 50%; }
+.term-title { font-size: 11px; color: var(--text3); margin: 0 auto; }
+.term-output {
+  background: #0a0a0c;
+  padding: 1rem 1.25rem;
+  font-size: 12.5px;
+  min-height: 160px;
+  max-height: 280px;
+  overflow-y: auto;
+  line-height: 1.7;
+}
+.term-line { display: flex; gap: 8px; }
+.term-ps1  { color: var(--or); flex-shrink: 0; user-select: none; }
+.term-input-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--bg2);
+  border-top: 0.5px solid var(--border);
+}
+.term-prompt-label { color: var(--or); font-size: 12.5px; flex-shrink: 0; }
+.term-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  caret-color: var(--or);
+}
+.term-run-btn {
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 6px;
+  background: var(--or-soft);
+  border: 0.5px solid var(--or-border, rgba(240,81,51,0.3));
+  color: var(--or);
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: all 0.15s;
+}
+.term-run-btn:hover { background: var(--or); color: white; }
+.term-suggestions {
+  display: flex; gap: 6px; padding: 6px 14px;
+  background: var(--bg2); border-top: 0.5px solid var(--border);
+  flex-wrap: wrap;
+}
+.term-sug {
+  font-size: 10px;
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--mono);
+}
+.term-sug:hover { border-color: var(--or-soft); color: var(--or); }
+
+/* ── EXERCISE CARDS ─────────────────────────────────────── */
+.exercise-card {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+.exercise-card:hover { border-color: var(--border2); }
+.exercise-card.completed { border-color: rgba(63,185,80,0.3); }
+.ex-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg2);
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+}
+.ex-check {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.ex-check svg { width: 12px; height: 12px; stroke: white; stroke-width: 2.5; fill: none; opacity: 0; transition: opacity 0.2s; }
+.exercise-card.completed .ex-check { background: var(--green); border-color: var(--green); }
+.exercise-card.completed .ex-check svg { opacity: 1; }
+.ex-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+.ex-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 0.5px solid;
+}
+.ex-badge.easy   { border-color: var(--green-s);  color: var(--green);  background: var(--green-s);  }
+.ex-badge.medium { border-color: var(--yellow-s); color: var(--yellow); background: var(--yellow-s); }
+.ex-badge.hard   { border-color: var(--red-s);    color: var(--red);    background: var(--red-s);    }
+.ex-body {
+  padding: 1rem 1.25rem;
+  background: var(--bg2);
+  display: none;
+}
+.ex-body.open { display: block; }
+.ex-toggle { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+.ex-toggle svg { width: 12px; height: 12px; stroke: var(--text3); fill: none; transition: transform 0.2s; }
+.ex-header[aria-expanded="true"] .ex-toggle svg { transform: rotate(180deg); }
+
+.step-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.step-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+}
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  font-size: 10px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3);
+  flex-shrink: 0; margin-top: 1px;
+}
+.hint-box {
+  margin-top: 0.75rem;
+  padding: 10px 14px;
+  background: var(--blue-s);
+  border: 0.5px solid rgba(88,166,255,0.2);
+  border-radius: 8px;
+  font-size: 12px; color: var(--text2); line-height: 1.6;
+}
+.hint-box strong { color: var(--blue); }
+
+/* ── COMMAND REFERENCE TABLE ─────────────────────────────── */
+.cmd-ref {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.cmd-ref table {
+  width: 100%; border-collapse: collapse;
+}
+.cmd-ref th {
+  padding: 8px 14px;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  background: var(--bg3);
+  border-bottom: 0.5px solid var(--border);
+  font-weight: 400;
+}
+.cmd-ref td {
+  padding: 9px 14px;
+  font-size: 12px;
+  border-bottom: 0.5px solid var(--border);
+  vertical-align: top;
+}
+.cmd-ref tr:last-child td { border-bottom: none; }
+.cmd-ref tr:hover td { background: var(--bg3); }
+.cmd-ref td:first-child {
+  font-family: var(--mono);
+  color: var(--or);
+  width: 42%;
+  white-space: nowrap;
+}
+.cmd-ref td:last-child { color: var(--text2); }
+
+/* ── CALLOUT BOXES ───────────────────────────────────────── */
+.callout {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 12px;
+  line-height: 1.7;
+  display: flex; gap: 10px; align-items: flex-start;
+  border: 0.5px solid;
+}
+.callout-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { flex: 1; }
+.callout-body strong { font-weight: 500; display: block; margin-bottom: 2px; }
+.callout.tip   { background: var(--blue-s);   border-color: rgba(88,166,255,0.2);  color: var(--text2); }
+.callout.warn  { background: var(--yellow-s); border-color: rgba(227,179,65,0.2); color: var(--text2); }
+.callout.ok    { background: var(--green-s);  border-color: rgba(63,185,80,0.2);  color: var(--text2); }
+.callout.danger{ background: var(--red-s);    border-color: rgba(248,81,73,0.2);   color: var(--text2); }
+.callout strong { color: var(--text); }
+
+/* ── QUIZ ────────────────────────────────────────────────── */
+.quiz-card {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg2);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.quiz-q { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 1rem; }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px; color: var(--text2);
+  background: var(--bg3);
+  transition: all 0.15s;
+  text-align: left;
+  font-family: var(--mono);
+  width: 100%;
+}
+.quiz-opt:hover { border-color: var(--border2); color: var(--text); }
+.quiz-opt.correct  { border-color: rgba(63,185,80,0.5); background: var(--green-s); color: var(--green); }
+.quiz-opt.wrong    { border-color: rgba(248,81,73,0.5);  background: var(--red-s);   color: var(--red); }
+.quiz-feedback {
+  margin-top: 0.75rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px; color: var(--text2);
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok   { background: var(--green-s); border: 0.5px solid rgba(63,185,80,0.2); color: var(--green); }
+.quiz-feedback.no   { background: var(--red-s);   border: 0.5px solid rgba(248,81,73,0.2);  color: var(--red); }
+
+/* ── .GITIGNORE BUILDER ──────────────────────────────────── */
+.gi-builder {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.gi-header {
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 0.5px solid var(--border);
+  font-size: 11px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.gi-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 1rem; background: var(--bg2); }
+.gi-chip {
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  background: var(--bg3);
+  cursor: pointer;
+  color: var(--text2);
+  transition: all 0.15s;
+  font-family: var(--mono);
+}
+.gi-chip:hover { border-color: var(--border2); color: var(--text); }
+.gi-chip.selected { background: var(--or-soft); border-color: rgba(240,81,51,0.3); color: var(--or); }
+.gi-output {
+  background: #0a0a0c;
+  padding: 1rem 1.25rem;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  min-height: 120px;
+  white-space: pre;
+  line-height: 1.7;
+  border-top: 0.5px solid var(--border);
+}
+
+/* ── NEXT LESSON BTN ─────────────────────────────────────── */
+.lesson-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.5px solid var(--border);
+}
+.btn-primary {
+  padding: 10px 24px;
+  background: var(--or);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { background: var(--or2); transform: translateX(2px); }
+.btn-secondary {
+  padding: 10px 20px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { background: var(--bg4); color: var(--text); }
+
+/* ── COMMIT GRAPH ────────────────────────────────────────── */
+.commit-graph {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+.cg-row {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 8px;
+  position: relative;
+}
+.cg-row:last-child { margin-bottom: 0; }
+.cg-line {
+  width: 2px;
+  height: 28px;
+  background: var(--border2);
+  position: absolute;
+  left: 16px; top: -14px;
+  z-index: 0;
+}
+.cg-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: var(--bg);
+  flex-shrink: 0;
+  margin-right: 12px;
+  position: relative; z-index: 1;
+}
+.cg-info { flex: 1; min-width: 0; }
+.cg-hash { font-size: 10px; color: var(--yellow); font-family: var(--mono); }
+.cg-msg  { font-size: 12px; color: var(--text); }
+.cg-meta { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.cg-head {
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(240,81,51,0.15);
+  border: 0.5px solid rgba(240,81,51,0.3);
+  color: var(--or);
+  font-family: var(--mono);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.cg-branch {
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: var(--green-s);
+  border: 0.5px solid rgba(63,185,80,0.3);
+  color: var(--green);
+  font-family: var(--mono);
+  margin-left: 6px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 780px) {
+  :root { --sidebar-w: 0px; }
+  aside { display: none; }
+  main { margin-left: 0; padding: 1.5rem 1.25rem 3rem; }
+  .states-body { grid-template-columns: 1fr; }
+  .state-arrow { flex-direction: row; }
+  .arrow-line { width: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="header-brand" href="#">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M15 3l3.3 3.3-1.8 1.8L15 7l-1.5 1.5L17 12l-4.5 4.5L9 13 6 16l-3-3L15 3zm-3 16.5L7.5 15 9 13.5l4.5 4.5L12 19.5z"/></svg>
+    </div>
+    <span class="brand-name"><span>git</span> / phase-1</span>
+  </a>
+  <div class="header-sep"></div>
+  <div class="header-pills">
+    <span class="hpill active">foundation</span>
+    <span class="hpill">weeks 1–2</span>
+    <span class="hpill">beginner</span>
+  </div>
+</header>
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="globalProgress"></div></div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-label">lessons</div>
+    <div class="sidebar-section">
+      <button class="nav-item active" onclick="showLesson(0)" id="nav0">
+        <span class="nav-num">1</span>
+        <span class="nav-text">What is Git?</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(1)" id="nav1">
+        <span class="nav-num">2</span>
+        <span class="nav-text">Install &amp; Config</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(2)" id="nav2">
+        <span class="nav-num">3</span>
+        <span class="nav-text">init, clone &amp; working dir</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(3)" id="nav3">
+        <span class="nav-num">4</span>
+        <span class="nav-text">The 3 States</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(4)" id="nav4">
+        <span class="nav-num">5</span>
+        <span class="nav-text">add, commit, status, log, diff</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(5)" id="nav5">
+        <span class="nav-num">6</span>
+        <span class="nav-text">.gitignore</span>
+      </button>
+    </div>
+
+    <div class="sidebar-label">tools</div>
+    <div class="sidebar-section">
+      <button class="nav-item" onclick="showLesson(6)" id="nav6">
+        <span class="nav-num" style="background:var(--or-soft);color:var(--or)">✦</span>
+        <span class="nav-text">Terminal sandbox</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(7)" id="nav7">
+        <span class="nav-num" style="background:var(--or-soft);color:var(--or)">✦</span>
+        <span class="nav-text">Quick-reference</span>
+      </button>
+    </div>
+
+    <div class="sidebar-progress">
+      <div class="sp-label"><span>progress</span><span id="progressTxt">0 / 6</span></div>
+      <div class="sp-bar"><div class="sp-fill" id="sidebarProgress"></div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ════════════════════════════════════════
+         LESSON 0 — What is Git?
+    ════════════════════════════════════════ -->
+    <section class="lesson-section active" id="lesson0">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 01 of 06 · Phase 1 — Foundation</div>
+        <h1>What is Git &amp; why does it matter?</h1>
+        <p>Before touching a single command, understand the mental model. Git is not a backup tool — it's a <strong>time machine for your code</strong> that also lets multiple people work on the same files without overwriting each other.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~20 min</span>
+          <span class="meta-pill green">no tools needed</span>
+          <span class="meta-pill">concept</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">the problem git solves</div>
+        <p class="prose">Imagine you're writing an essay. You save copies as <code>essay_v1.docx</code>, <code>essay_v2.docx</code>, <code>essay_final.docx</code>, <code>essay_final_REAL.docx</code>… sound familiar? Git solves this by tracking <strong>every change you make</strong> with a message describing what changed and why.</p>
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body"><strong>The core idea</strong> Git stores <em>snapshots</em> of your project over time, not just file differences. Each snapshot (commit) has a unique ID, author, date, and a message you write. You can jump to any snapshot at any time.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git vs github — they are NOT the same</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+          <div style="padding:14px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+            <div style="font-size:12px;font-weight:500;color:var(--or);margin-bottom:6px">Git</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6">A free, open-source tool you install on <strong>your computer</strong>. It tracks changes in any folder on your machine. Works 100% offline.</div>
+          </div>
+          <div style="padding:14px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+            <div style="font-size:12px;font-weight:500;color:var(--blue);margin-bottom:6px">GitHub</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6">A <strong>website</strong> that hosts your Git repositories online. It adds collaboration features like pull requests, issues, and Actions on top of Git.</div>
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="callout-icon">⚠</span>
+          <div class="callout-body"><strong>Common confusion:</strong> You can use Git without GitHub. GitHub <em>requires</em> Git. Think of Git as the engine and GitHub as the garage where you park it.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">key vocabulary</div>
+        <div class="cmd-ref">
+          <table>
+            <tr><th>Term</th><th>What it means</th></tr>
+            <tr><td>repository (repo)</td><td>A folder tracked by Git — contains all your files + their full history</td></tr>
+            <tr><td>commit</td><td>A saved snapshot with a message, timestamp, and unique ID (hash)</td></tr>
+            <tr><td>branch</td><td>A parallel version of your project — you'll learn this in Phase 2</td></tr>
+            <tr><td>working directory</td><td>The folder on your disk where you actually edit files</td></tr>
+            <tr><td>staging area</td><td>A "prep zone" where you choose exactly which changes to include next commit</td></tr>
+            <tr><td>HEAD</td><td>A pointer to the commit you're currently on — usually the latest commit</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">knowledge check</div>
+        <div class="quiz-card">
+          <div class="quiz-q">Which of the following is true about Git and GitHub?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q1')">A. GitHub is required to use Git — they come together</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'correct','q1')">B. Git is a local tool; GitHub is a remote hosting service for Git repos</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q1')">C. Git works only on Linux and macOS</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q1')">D. GitHub replaces the need to run Git commands</button>
+          </div>
+          <div class="quiz-feedback" id="q1-feedback"></div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <span style="font-size:12px;color:var(--text3)">lesson 1 of 6</span>
+        <button class="btn-primary" onclick="nextLesson(0)">Next: Install &amp; Config →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 1 — Install & Config
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson1">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 02 of 06 · Phase 1 — Foundation</div>
+        <h1>Installing Git &amp; first-time config</h1>
+        <p>Get Git running on your machine and tell it who you are. These three config commands are the first thing every developer runs — you only do them once per computer.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~25 min</span>
+          <span class="meta-pill green">hands-on</span>
+          <span class="meta-pill">setup</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">installing git</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem">
+          <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Windows</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5">Download <code>git-scm.com</code> installer. Use default settings. Comes with Git Bash.</div>
+          </div>
+          <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">macOS</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5">Run <code>xcode-select --install</code> or install via Homebrew: <code>brew install git</code></div>
+          </div>
+          <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Linux</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5">Ubuntu/Debian: <code>sudo apt install git</code>. Fedora: <code>sudo dnf install git</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">first-time global config</div>
+        <p class="prose">Git needs to know who you are before it can record commits. These settings are saved to <code>~/.gitconfig</code> on your machine.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">terminal</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Tell Git your name (appears in every commit you make)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--global</span> user.name <span class="c-str">"Your Full Name"</span>
+
+<span class="c-comment"># Tell Git your email (use the same one as GitHub later)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--global</span> user.email <span class="c-str">"you@example.com"</span>
+
+<span class="c-comment"># Set VS Code as your default Git editor</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--global</span> core.editor <span class="c-str">"code --wait"</span>
+
+<span class="c-comment"># Set main as the default branch name (modern standard)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--global</span> init.defaultBranch <span class="c-str">main</span>
+
+<span class="c-comment"># Set color output (makes reading much easier)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--global</span> color.ui <span class="c-str">auto</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">verify your config</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">terminal</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># List all your current config settings</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> <span class="c-arg">--list</span>
+
+<span class="c-out">user.name=Your Full Name
+user.email=you@example.com
+core.editor=code --wait
+init.defaultbranch=main
+color.ui=auto</span>
+
+<span class="c-comment"># Check a specific value</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git config</span> user.name
+<span class="c-out">Your Full Name</span>
+
+<span class="c-comment"># Check Git version (should be 2.40+)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git</span> <span class="c-arg">--version</span>
+<span class="c-ok">git version 2.49.0</span></div>
+        </div>
+        <div class="callout ok">
+          <span class="callout-icon">✓</span>
+          <div class="callout-body"><strong>Three config levels:</strong> <code>--global</code> applies to your user (all repos). <code>--local</code> applies to just the current repo. <code>--system</code> applies to all users on the machine. Global is what you want 99% of the time.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">exercise — set up git on your machine</div>
+        <div class="exercise-card" id="ex1-1">
+          <div class="ex-header" aria-expanded="true" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex1-1')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Configure Git for the first time</span>
+            <span class="ex-badge easy">easy</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body open">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>Open your terminal (Terminal on Mac/Linux, Git Bash on Windows)</li>
+              <li class="step-item"><span class="step-num">2</span>Run <code>git --version</code> to confirm Git is installed. You should see a version number.</li>
+              <li class="step-item"><span class="step-num">3</span>Run the 5 config commands above with your real name and email.</li>
+              <li class="step-item"><span class="step-num">4</span>Run <code>git config --list</code> and confirm your name and email appear.</li>
+              <li class="step-item"><span class="step-num">5</span>Click the checkbox above to mark this exercise complete.</li>
+            </ul>
+            <div class="hint-box"><strong>Hint:</strong> On Windows, if <code>git</code> is not found, close and reopen your terminal after installation. The PATH needs to refresh.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="prevLesson(1)">← Back</button>
+        <button class="btn-primary" onclick="nextLesson(1)">Next: init &amp; clone →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 2 — init, clone, working dir
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson2">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 03 of 06 · Phase 1 — Foundation</div>
+        <h1>git init, git clone &amp; the working directory</h1>
+        <p>Every Git repo starts one of two ways: you create a fresh one with <code>git init</code>, or you download an existing one with <code>git clone</code>. These are the two entry points to every project.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~30 min</span>
+          <span class="meta-pill green">hands-on</span>
+          <span class="meta-pill">core command</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">what lives inside a git repo</div>
+        <p class="prose">When you run <code>git init</code>, Git creates a hidden <code>.git/</code> folder. This is the entire history of your project — all commits, branches, config. <strong>Never manually edit anything inside .git/.</strong></p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">project structure after git init</span>
+          </div>
+          <div class="code-body"><span class="c-ok">my-project/</span>
+<span class="c-out">├── </span><span class="c-key">.git/</span><span class="c-comment">           ← Git's brain — don't touch this</span>
+<span class="c-out">│   ├── HEAD        ← points to current branch</span>
+<span class="c-out">│   ├── config      ← repo-specific config</span>
+<span class="c-out">│   ├── objects/    ← all your commits & file data</span>
+<span class="c-out">│   └── refs/       ← branches & tags</span>
+<span class="c-out">├── index.html</span>
+<span class="c-out">├── style.css</span>
+<span class="c-out">└── README.md</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git init — start a new repo</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">terminal</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Create a new folder and make it a git repo</span>
+<span class="c-prompt">$ </span><span class="c-cmd">mkdir</span> my-project
+<span class="c-prompt">$ </span><span class="c-cmd">cd</span> my-project
+<span class="c-prompt">$ </span><span class="c-cmd">git init</span>
+<span class="c-ok">Initialized empty Git repository in /Users/you/my-project/.git/</span>
+
+<span class="c-comment"># Or: create + init in one step</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git init</span> <span class="c-arg">my-project</span>
+<span class="c-ok">Initialized empty Git repository in my-project/.git/</span>
+
+<span class="c-comment"># Confirm the hidden .git folder was created</span>
+<span class="c-prompt">$ </span><span class="c-cmd">ls -la</span>
+<span class="c-out">drwxr-xr-x  .git</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git clone — copy an existing repo</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">terminal</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Clone via HTTPS (simpler, asks for password)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git clone</span> <span class="c-str">https://github.com/user/repo.git</span>
+
+<span class="c-comment"># Clone via SSH (recommended once SSH is set up)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git clone</span> <span class="c-str">git@github.com:user/repo.git</span>
+
+<span class="c-comment"># Clone into a specific folder name</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git clone</span> <span class="c-str">https://github.com/user/repo.git</span> <span class="c-arg">my-folder-name</span>
+
+<span class="c-comment"># Clone only the latest commit (faster for large repos)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git clone</span> <span class="c-arg">--depth 1</span> <span class="c-str">https://github.com/user/repo.git</span>
+
+<span class="c-out">Cloning into 'repo'...
+remote: Counting objects: 423, done.
+Receiving objects: 100% (423/423), 1.24 MiB | 4.2 MiB/s, done.</span></div>
+        </div>
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body"><strong>init vs clone:</strong> Use <code>git init</code> for brand-new projects you're starting yourself. Use <code>git clone</code> when a repo already exists somewhere (GitHub, a colleague's machine, etc.).</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">exercise — create your first repo</div>
+        <div class="exercise-card" id="ex2-1">
+          <div class="ex-header" aria-expanded="true" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex2-1')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Init a "my-journal" repo and explore its structure</span>
+            <span class="ex-badge easy">easy</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body open">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>Open your terminal and run: <code>git init my-journal</code></li>
+              <li class="step-item"><span class="step-num">2</span>Navigate into it: <code>cd my-journal</code></li>
+              <li class="step-item"><span class="step-num">3</span>Run <code>ls -la</code> (Mac/Linux) or <code>dir /a</code> (Windows) — you should see the <code>.git</code> folder.</li>
+              <li class="step-item"><span class="step-num">4</span>Create a file: <code>echo "# My Journal" &gt; README.md</code></li>
+              <li class="step-item"><span class="step-num">5</span>Run <code>git status</code> — you should see README.md listed as "untracked". This is expected! We'll commit it in Lesson 5.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="exercise-card" id="ex2-2">
+          <div class="ex-header" aria-expanded="false" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex2-2')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Clone any public GitHub repo</span>
+            <span class="ex-badge easy">easy</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>Go to any public GitHub repo (e.g. <code>github.com/torvalds/linux</code> for fun, or something smaller)</li>
+              <li class="step-item"><span class="step-num">2</span>Click the green "Code" button and copy the HTTPS URL</li>
+              <li class="step-item"><span class="step-num">3</span>Run: <code>git clone &lt;URL&gt; --depth 1</code> (depth 1 = only latest commit, much faster)</li>
+              <li class="step-item"><span class="step-num">4</span>Run <code>git log --oneline</code> inside it — you'll see real commits from other developers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="prevLesson(2)">← Back</button>
+        <button class="btn-primary" onclick="nextLesson(2)">Next: The 3 States →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 3 — The 3 States
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson3">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 04 of 06 · Phase 1 — Foundation</div>
+        <h1>The 3 states — Git's core mental model</h1>
+        <p>This is the single most important concept in Git. Until this clicks, commands feel random. Once it clicks, everything makes perfect sense.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~35 min</span>
+          <span class="meta-pill">core concept</span>
+          <span class="meta-pill" style="border-color:rgba(240,81,51,0.3);color:var(--or)">most important</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">interactive states visualizer</div>
+        <div class="states-viz">
+          <div class="states-header">click a state to learn more</div>
+          <div class="states-body">
+            <div class="state-box working" onclick="showStateInfo('working')">
+              <div class="state-icon">📁</div>
+              <div class="state-name">Working Directory</div>
+              <div class="state-sub">Files you see &amp; edit on disk right now</div>
+              <div class="state-cmd">git add</div>
+            </div>
+            <div class="state-arrow">
+              <div class="arrow-line"></div>
+              <div class="arrow-label">git add</div>
+            </div>
+            <div class="state-box staging" onclick="showStateInfo('staging')">
+              <div class="state-icon">📋</div>
+              <div class="state-name">Staging Area</div>
+              <div class="state-sub">Changes queued for the next commit</div>
+              <div class="state-cmd">git commit</div>
+            </div>
+            <div class="state-arrow">
+              <div class="arrow-line"></div>
+              <div class="arrow-label">git commit</div>
+            </div>
+            <div class="state-box repo" onclick="showStateInfo('repo')">
+              <div class="state-icon">🗄</div>
+              <div class="state-name">Repository</div>
+              <div class="state-sub">Permanent history stored in .git/</div>
+              <div class="state-cmd">git log</div>
+            </div>
+          </div>
+          <div class="states-files">
+            <div style="font-size:10px;color:var(--text3);width:100%;margin-bottom:4px">example files in each state:</div>
+            <span class="file-chip untracked"><span class="fc-dot" style="background:var(--blue)"></span>new-file.txt (untracked)</span>
+            <span class="file-chip staged"><span class="fc-dot" style="background:var(--yellow)"></span>style.css (staged)</span>
+            <span class="file-chip committed"><span class="fc-dot" style="background:var(--green)"></span>index.html (committed)</span>
+          </div>
+          <div class="file-legend">
+            <span class="fl-item"><span class="fl-dot" style="background:var(--blue)"></span>untracked / modified</span>
+            <span class="fl-item"><span class="fl-dot" style="background:var(--yellow)"></span>staged (index)</span>
+            <span class="fl-item"><span class="fl-dot" style="background:var(--green)"></span>committed (in history)</span>
+          </div>
+        </div>
+        <div id="state-info-box" class="callout tip" style="display:none"></div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">why does the staging area exist?</div>
+        <p class="prose">The staging area lets you craft <strong>precise, meaningful commits</strong>. You might change 5 files, but only want to commit 2 of them together. You stage just those 2, commit with a clear message, then stage the rest separately.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">real-world example — selective staging</span>
+          </div>
+          <div class="code-body"><span class="c-comment"># You changed 3 files but they belong to different fixes</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git status</span>
+<span class="c-out">Changes not staged for commit:
+    </span><span class="c-err">modified:   auth.js         ← bug fix</span>
+<span class="c-out">    </span><span class="c-err">modified:   style.css       ← UI improvement</span>
+<span class="c-out">    </span><span class="c-err">modified:   README.md       ← documentation</span>
+
+<span class="c-comment"># Stage ONLY the bug fix first</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> auth.js
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">-m</span> <span class="c-str">"fix: resolve null pointer in auth check"</span>
+
+<span class="c-comment"># Then stage the rest separately</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> style.css README.md
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">-m</span> <span class="c-str">"docs: update README + improve button styles"</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">moving files between states</div>
+        <div class="cmd-ref">
+          <table>
+            <tr><th>Command</th><th>What it does</th></tr>
+            <tr><td>git add &lt;file&gt;</td><td>Working Dir → Staging: queue this file for next commit</td></tr>
+            <tr><td>git add .</td><td>Stage ALL changed files in current directory</td></tr>
+            <tr><td>git add -p</td><td>Interactively stage individual chunks (hunks) of changes</td></tr>
+            <tr><td>git commit -m "msg"</td><td>Staging → Repo: permanently save all staged changes</td></tr>
+            <tr><td>git restore --staged &lt;file&gt;</td><td>Unstage a file (move back from staging to working dir)</td></tr>
+            <tr><td>git restore &lt;file&gt;</td><td>Discard working dir changes (dangerous — can't undo!)</td></tr>
+            <tr><td>git diff</td><td>See unstaged changes (working dir vs staging)</td></tr>
+            <tr><td>git diff --staged</td><td>See staged changes (staging vs last commit)</td></tr>
+          </table>
+        </div>
+        <div class="callout danger">
+          <span class="callout-icon">🚫</span>
+          <div class="callout-body"><strong>Careful with git restore &lt;file&gt;</strong> — this throws away your unsaved working directory changes permanently. There is no undo. Always run <code>git status</code> first to see what will be lost.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">quiz — test the 3 states</div>
+        <div class="quiz-card">
+          <div class="quiz-q">You edited <code>app.js</code> and want to include it in your next commit. What should you run?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3a')">A. git commit app.js</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'correct','q3a')">B. git add app.js, then git commit -m "message"</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3a')">C. git save app.js</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3a')">D. git push app.js</button>
+          </div>
+          <div class="quiz-feedback" id="q3a-feedback"></div>
+        </div>
+        <div class="quiz-card">
+          <div class="quiz-q">You staged a file with <code>git add</code> but realized you don't want to include it in the next commit. What command un-stages it?</div>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3b')">A. git remove --cached file.txt</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3b')">B. git undo file.txt</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'correct','q3b')">C. git restore --staged file.txt</button>
+            <button class="quiz-opt" onclick="checkQuiz(this,'wrong','q3b')">D. git reset file.txt (older syntax, also works)</button>
+          </div>
+          <div class="quiz-feedback" id="q3b-feedback"></div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="prevLesson(3)">← Back</button>
+        <button class="btn-primary" onclick="nextLesson(3)">Next: add, commit, log, diff →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 4 — add, commit, status, log, diff
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson4">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 05 of 06 · Phase 1 — Foundation</div>
+        <h1>add · commit · status · log · diff</h1>
+        <p>These 5 commands are your daily bread. You'll run them dozens of times every day. Master them and you've mastered the core Git loop.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~45 min</span>
+          <span class="meta-pill green">most-used commands</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git status — your compass</div>
+        <p class="prose"><code>git status</code> tells you exactly where every file is. Run it constantly — before and after every other command. Think of it as asking "what's going on right now?"</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">git status output — reading it</span>
+          </div>
+          <div class="code-body"><span class="c-prompt">$ </span><span class="c-cmd">git status</span>
+<span class="c-out">On branch main
+
+Changes to be committed:         </span><span class="c-comment">← STAGED (green in terminal)</span>
+<span class="c-ok">    new file:   index.html
+    modified:   style.css</span>
+
+<span class="c-out">Changes not staged for commit:    </span><span class="c-comment">← MODIFIED but not staged (red)</span>
+<span class="c-err">    modified:   app.js</span>
+
+<span class="c-out">Untracked files:                  </span><span class="c-comment">← Git doesn't know about these yet</span>
+<span class="c-err">    notes.txt
+    temp/</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git add — staging your changes</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">all ways to use git add</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Stage a single file</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> index.html
+
+<span class="c-comment"># Stage multiple files at once</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> index.html style.css app.js
+
+<span class="c-comment"># Stage everything in current directory (use with care)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> .
+
+<span class="c-comment"># Stage all .js files</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> <span class="c-str">*.js</span>
+
+<span class="c-comment"># Interactively choose which changes to stage (advanced, very useful)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> <span class="c-arg">-p</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git commit — saving a snapshot</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">writing good commits</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Commit with inline message (fast, most common)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">-m</span> <span class="c-str">"add navigation bar to homepage"</span>
+
+<span class="c-comment"># Stage + commit all tracked files in one step</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">-am</span> <span class="c-str">"fix typo in login form"</span>
+
+<span class="c-comment"># Amend the LAST commit (fix message or add forgotten files)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">--amend</span> <span class="c-arg">-m</span> <span class="c-str">"correct commit message"</span>
+
+<span class="c-comment"># Successful commit output looks like this:</span>
+<span class="c-ok">[main 4f2a1b3] add navigation bar to homepage
+ 2 files changed, 47 insertions(+), 3 deletions(-)</span></div>
+        </div>
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body"><strong>Good commit message formula:</strong> Start with a verb in imperative mood. Keep it under 72 chars. Examples: <code>"add user login form"</code>, <code>"fix null pointer in auth"</code>, <code>"remove deprecated API call"</code>. Avoid <code>"fixed stuff"</code> or <code>"changes"</code>.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git log — reading history</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">git log — all the ways to read history</span>
+          </div>
+          <div class="code-body"><span class="c-comment"># Default: full log with dates, authors, full hashes</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git log</span>
+
+<span class="c-comment"># Compact: one commit per line (most useful daily)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git log</span> <span class="c-arg">--oneline</span>
+<span class="c-out">4f2a1b3 (HEAD -> main) add navigation bar
+d8c3f91 fix typo in login form
+a1b2c3d initial commit</span>
+
+<span class="c-comment"># Visual branch graph (essential for Phase 2)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git log</span> <span class="c-arg">--oneline --graph --all</span>
+
+<span class="c-comment"># Show commits by a specific author</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git log</span> <span class="c-arg">--author=</span><span class="c-str">"Your Name"</span>
+
+<span class="c-comment"># Show last 5 commits only</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git log</span> <span class="c-arg">-5</span></div>
+        </div>
+        <div class="commit-graph">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:12px;letter-spacing:0.08em;text-transform:uppercase">example commit graph — what git log looks like</div>
+          <div class="cg-row">
+            <div class="cg-dot" style="border-color:var(--or)"></div>
+            <div class="cg-info">
+              <div><span class="cg-hash">4f2a1b3</span><span class="cg-head">HEAD → main</span></div>
+              <div class="cg-msg">add navigation bar to homepage</div>
+              <div class="cg-meta">You · 2 minutes ago</div>
+            </div>
+          </div>
+          <div class="cg-row">
+            <div class="cg-line"></div>
+            <div class="cg-dot" style="border-color:var(--blue)"></div>
+            <div class="cg-info">
+              <div><span class="cg-hash">d8c3f91</span></div>
+              <div class="cg-msg">fix typo in login form label</div>
+              <div class="cg-meta">You · 1 hour ago</div>
+            </div>
+          </div>
+          <div class="cg-row">
+            <div class="cg-line"></div>
+            <div class="cg-dot" style="border-color:var(--purple)"></div>
+            <div class="cg-info">
+              <div><span class="cg-hash">a1b2c3d</span></div>
+              <div class="cg-msg">add login form HTML &amp; basic styles</div>
+              <div class="cg-meta">You · 3 hours ago</div>
+            </div>
+          </div>
+          <div class="cg-row">
+            <div class="cg-line"></div>
+            <div class="cg-dot" style="border-color:var(--text3)"></div>
+            <div class="cg-info">
+              <div><span class="cg-hash">c0ffee0</span></div>
+              <div class="cg-msg">initial commit — add README</div>
+              <div class="cg-meta">You · yesterday</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">git diff — seeing exact changes</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">reading a diff</span>
+          </div>
+          <div class="code-body"><span class="c-prompt">$ </span><span class="c-cmd">git diff</span>
+
+<span class="c-out">diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -10,7 +10,9 @@</span>
+<span class="c-out"> &lt;body&gt;
+   &lt;h1&gt;Hello World&lt;/h1&gt;</span>
+<span class="c-err">-  &lt;p&gt;Old paragraph&lt;/p&gt;</span>   <span class="c-comment">← removed (red)</span>
+<span class="c-ok">+  &lt;p&gt;Updated paragraph&lt;/p&gt;</span>  <span class="c-comment">← added (green)</span>
+<span class="c-ok">+  &lt;p&gt;New second paragraph&lt;/p&gt;</span>
+<span class="c-out"> &lt;/body&gt;</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">exercise — the full git loop</div>
+        <div class="exercise-card" id="ex4-1">
+          <div class="ex-header" aria-expanded="true" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex4-1')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Make 3 commits in your my-journal repo</span>
+            <span class="ex-badge medium">medium</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body open">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>In your <code>my-journal</code> repo: <code>git add README.md</code> → <code>git commit -m "initial commit"</code></li>
+              <li class="step-item"><span class="step-num">2</span>Create a new file: <code>echo "Today I learned about git init" &gt; day-1.md</code></li>
+              <li class="step-item"><span class="step-num">3</span>Stage and commit: <code>git add day-1.md</code> → <code>git commit -m "add day 1 journal entry"</code></li>
+              <li class="step-item"><span class="step-num">4</span>Edit <code>day-1.md</code>, add another line. Then run <code>git diff</code> to see your change before staging.</li>
+              <li class="step-item"><span class="step-num">5</span>Commit the update: <code>git add -p</code> (try interactive staging), then <code>git commit -m "update day 1 notes"</code></li>
+              <li class="step-item"><span class="step-num">6</span>Run <code>git log --oneline</code> — you should see all 3 commits.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="exercise-card" id="ex4-2">
+          <div class="ex-header" aria-expanded="false" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex4-2')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Practice selective staging with 3 changed files</span>
+            <span class="ex-badge medium">medium</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>Create 3 new files: <code>file-a.txt</code>, <code>file-b.txt</code>, <code>file-c.txt</code> with any content</li>
+              <li class="step-item"><span class="step-num">2</span>Run <code>git status</code> — all 3 should show as untracked</li>
+              <li class="step-item"><span class="step-num">3</span>Stage only file-a and file-b: <code>git add file-a.txt file-b.txt</code></li>
+              <li class="step-item"><span class="step-num">4</span>Run <code>git status</code> again. See how file-a/b are green (staged) but file-c is still red (unstaged).</li>
+              <li class="step-item"><span class="step-num">5</span>Commit: <code>git commit -m "add file a and b"</code></li>
+              <li class="step-item"><span class="step-num">6</span>Now stage and commit file-c separately with a different message.</li>
+              <li class="step-item"><span class="step-num">7</span>Run <code>git log --oneline</code> — confirm you have 2 separate commits.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="prevLesson(4)">← Back</button>
+        <button class="btn-primary" onclick="nextLesson(4)">Next: .gitignore →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 5 — .gitignore
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson5">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Lesson 06 of 06 · Phase 1 — Foundation</div>
+        <h1>.gitignore — telling Git what to ignore</h1>
+        <p>Not everything in your project should be tracked. Secrets, build artifacts, OS junk, and dependencies should stay out of Git. <code>.gitignore</code> is how you tell Git to look away.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">~25 min</span>
+          <span class="meta-pill green">hands-on</span>
+          <span class="meta-pill">best practice</span>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">what NOT to commit</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+          <div style="padding:12px 14px;background:var(--red-s);border:0.5px solid rgba(248,81,73,0.2);border-radius:10px">
+            <div style="font-size:11px;color:var(--red);margin-bottom:6px">🚫 Never commit these</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.8">
+              <code>.env</code> / <code>.env.local</code><br>
+              API keys &amp; passwords<br>
+              <code>node_modules/</code><br>
+              <code>__pycache__/</code><br>
+              <code>.DS_Store</code> (macOS)<br>
+              <code>*.log</code> files<br>
+              <code>dist/</code> / <code>build/</code><br>
+              IDE folders (<code>.vscode/</code>, <code>.idea/</code>)
+            </div>
+          </div>
+          <div style="padding:12px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:10px">
+            <div style="font-size:11px;color:var(--green);margin-bottom:6px">✓ Always commit these</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.8">
+              Source code (<code>.js</code>, <code>.py</code>, etc.)<br>
+              <code>package.json</code> (not lock, debatable)<br>
+              <code>README.md</code><br>
+              Config files (<code>.eslintrc</code>)<br>
+              <code>.gitignore</code> itself<br>
+              Tests<br>
+              <code>.env.example</code> (template only)<br>
+              Documentation
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">gitignore syntax — all the patterns</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">.gitignore</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># Lines starting with # are comments</span>
+
+<span class="c-comment"># Ignore a specific file</span>
+<span class="c-key">.env</span>
+<span class="c-key">secrets.txt</span>
+
+<span class="c-comment"># Ignore all files with this extension</span>
+<span class="c-key">*.log</span>
+<span class="c-key">*.tmp</span>
+<span class="c-key">*.pyc</span>
+
+<span class="c-comment"># Ignore an entire directory</span>
+<span class="c-key">node_modules/</span>
+<span class="c-key">dist/</span>
+<span class="c-key">__pycache__/</span>
+<span class="c-key">.venv/</span>
+
+<span class="c-comment"># Ignore files only in root, not subdirectories</span>
+<span class="c-key">/config.json</span>
+
+<span class="c-comment"># Ignore all .txt files in a specific folder</span>
+<span class="c-key">docs/*.txt</span>
+
+<span class="c-comment"># Use ! to UN-ignore something previously ignored</span>
+<span class="c-key">*.log</span>
+<span class="c-ok">!important.log</span>  <span class="c-comment">← keep this one despite *.log above</span>
+
+<span class="c-comment"># Double star matches any depth</span>
+<span class="c-key">**/temp</span>         <span class="c-comment">← matches temp/ anywhere in project</span></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">interactive .gitignore builder</div>
+        <div class="gi-builder">
+          <div class="gi-header">
+            <span>select your project type</span>
+            <span style="font-size:10px;cursor:pointer;color:var(--or)" onclick="clearGitignore()">clear</span>
+          </div>
+          <div class="gi-chips">
+            <span class="gi-chip" onclick="toggleGi(this,'node')">Node.js</span>
+            <span class="gi-chip" onclick="toggleGi(this,'python')">Python</span>
+            <span class="gi-chip" onclick="toggleGi(this,'react')">React</span>
+            <span class="gi-chip" onclick="toggleGi(this,'macos')">macOS</span>
+            <span class="gi-chip" onclick="toggleGi(this,'windows')">Windows</span>
+            <span class="gi-chip" onclick="toggleGi(this,'vscode')">VS Code</span>
+            <span class="gi-chip" onclick="toggleGi(this,'env')">Env files</span>
+            <span class="gi-chip" onclick="toggleGi(this,'logs')">Log files</span>
+          </div>
+          <div class="gi-output" id="gi-output"># Select project types above to generate your .gitignore</div>
+        </div>
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body"><strong>gitignore.io</strong> — visit <code>gitignore.io</code> for instantly generated .gitignore templates for any stack. Also: <code>gh repo create</code> on GitHub lets you choose a template at repo creation time.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">already tracked a file by mistake?</div>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div>
+            <span class="code-filename">un-tracking a committed file</span>
+            <button class="code-copy" onclick="copyCode(this)">copy</button>
+          </div>
+          <div class="code-body"><span class="c-comment"># If you accidentally committed .env and want to remove it from Git</span>
+<span class="c-comment"># (but keep the file on your disk)</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git rm</span> <span class="c-arg">--cached</span> .env
+<span class="c-out">rm '.env'</span>
+
+<span class="c-comment"># Then add .env to .gitignore</span>
+<span class="c-prompt">$ </span><span class="c-cmd">echo</span> <span class="c-str">".env"</span> >> .gitignore
+
+<span class="c-comment"># Commit both changes</span>
+<span class="c-prompt">$ </span><span class="c-cmd">git add</span> .gitignore
+<span class="c-prompt">$ </span><span class="c-cmd">git commit</span> <span class="c-arg">-m</span> <span class="c-str">"stop tracking .env, add to gitignore"</span></div>
+        </div>
+        <div class="callout danger">
+          <span class="callout-icon">🚫</span>
+          <div class="callout-body"><strong>If you pushed a secret to GitHub — act fast!</strong> The secret is now in public history. Immediately revoke/rotate the key in your service (AWS, Stripe, etc.), then remove it from Git history. History rewriting is Phase 5 territory — for now, just rotate the key immediately.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">exercise — .gitignore in practice</div>
+        <div class="exercise-card" id="ex5-1">
+          <div class="ex-header" aria-expanded="true" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex5-1')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Add a proper .gitignore to my-journal</span>
+            <span class="ex-badge easy">easy</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body open">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>In <code>my-journal</code>, create a file named <code>.env</code> and add <code>API_KEY=supersecret123</code> inside it</li>
+              <li class="step-item"><span class="step-num">2</span>Run <code>git status</code> — you'll see <code>.env</code> listed as untracked (don't add it!)</li>
+              <li class="step-item"><span class="step-num">3</span>Create a <code>.gitignore</code> file. Use the builder above or type: <code>.env</code>, <code>*.log</code>, <code>.DS_Store</code> on separate lines</li>
+              <li class="step-item"><span class="step-num">4</span>Run <code>git status</code> again — <code>.env</code> should now be invisible to Git. Only <code>.gitignore</code> shows as untracked.</li>
+              <li class="step-item"><span class="step-num">5</span>Commit: <code>git add .gitignore &amp;&amp; git commit -m "add gitignore"</code></li>
+            </ul>
+          </div>
+        </div>
+        <div class="exercise-card" id="ex5-2">
+          <div class="ex-header" aria-expanded="false" onclick="toggleEx(this)">
+            <div class="ex-check" onclick="markDone(event,'ex5-2')">
+              <svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg>
+            </div>
+            <span class="ex-title">Phase 1 capstone — 10-commit journal project</span>
+            <span class="ex-badge hard">hard</span>
+            <span class="ex-toggle"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+          </div>
+          <div class="ex-body">
+            <ul class="step-list">
+              <li class="step-item"><span class="step-num">1</span>Over the next 5 days, write one markdown file per day (<code>day-1.md</code> through <code>day-5.md</code>) in your <code>my-journal</code> repo</li>
+              <li class="step-item"><span class="step-num">2</span>Each day: make at least 2 commits — one when you write, one when you edit</li>
+              <li class="step-item"><span class="step-num">3</span>At least once, use <code>git add -p</code> to practice staging individual hunks</li>
+              <li class="step-item"><span class="step-num">4</span>At least once, use <code>git commit --amend</code> to fix a typo in a commit message</li>
+              <li class="step-item"><span class="step-num">5</span>At the end: run <code>git log --oneline</code> and verify you have 10+ commits with clear, descriptive messages</li>
+            </ul>
+            <div class="hint-box"><strong>Goal of this exercise:</strong> You should feel totally comfortable with the add → commit → log loop. By day 5, these commands should feel like typing words — no thinking required.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">🎉 phase 1 complete — what you learned</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ What Git is and why it exists</div>
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ Install Git &amp; global config</div>
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ git init &amp; git clone</div>
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ The 3 states (core mental model)</div>
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ add, commit, status, log, diff</div>
+          <div style="padding:10px 14px;background:var(--green-s);border:0.5px solid rgba(63,185,80,0.2);border-radius:8px;font-size:12px;color:var(--green)">✓ .gitignore patterns &amp; best practices</div>
+        </div>
+        <div class="callout ok" style="margin-top:1rem">
+          <span class="callout-icon">🚀</span>
+          <div class="callout-body"><strong>Ready for Phase 2?</strong> Next you'll learn branching — the feature that makes Git truly powerful. Every professional uses branches daily. Go try <code>git switch -c my-first-branch</code> as a preview!</div>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="prevLesson(5)">← Back</button>
+        <button class="btn-primary" onclick="showLesson(6)">Terminal Sandbox →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 6 — Terminal Sandbox
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson6">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Tool — Practice</div>
+        <h1>Terminal sandbox</h1>
+        <p>Practice Phase 1 commands in a simulated terminal. Try any command from the lessons — the simulator understands all Phase 1 Git commands and gives realistic output.</p>
+        <div class="lesson-meta-row">
+          <span class="meta-pill orange">interactive</span>
+          <span class="meta-pill">simulated git</span>
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div class="term-header">
+          <div class="term-dots">
+            <div class="term-dot" style="background:#ff5f57"></div>
+            <div class="term-dot" style="background:#ffbd2e"></div>
+            <div class="term-dot" style="background:#28c940"></div>
+          </div>
+          <span class="term-title">my-journal — git sandbox</span>
+        </div>
+        <div class="term-output" id="termOutput">
+          <div style="color:var(--text3);font-size:12px;margin-bottom:8px"># Git Phase 1 Terminal Sandbox</div>
+          <div style="color:var(--text3);font-size:12px;margin-bottom:12px"># Type any git command below. Try: git status, git log, git add, git commit</div>
+          <div class="term-line"><span class="term-ps1">~/my-journal $</span><span style="color:var(--text3)"> _</span></div>
+        </div>
+        <div class="term-suggestions" id="termSugs">
+          <span class="term-sug" onclick="runSuggest('git status')">git status</span>
+          <span class="term-sug" onclick="runSuggest('git log --oneline')">git log --oneline</span>
+          <span class="term-sug" onclick="runSuggest('git add .')">git add .</span>
+          <span class="term-sug" onclick="runSuggest('git diff')">git diff</span>
+          <span class="term-sug" onclick="runSuggest('git config --list')">git config --list</span>
+          <span class="term-sug" onclick="runSuggest('ls -la')">ls -la</span>
+        </div>
+        <div class="term-input-row">
+          <span class="term-prompt-label">~/my-journal $</span>
+          <input class="term-input" id="termInput" type="text" placeholder="type a git command..." autocomplete="off" spellcheck="false" onkeydown="handleTermKey(event)">
+          <button class="term-run-btn" onclick="runTermCmd()">run</button>
+        </div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="showLesson(5)">← Lessons</button>
+        <button class="btn-primary" onclick="showLesson(7)">Quick Reference →</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         LESSON 7 — Quick Reference
+    ════════════════════════════════════════ -->
+    <section class="lesson-section" id="lesson7">
+      <div class="lesson-hero">
+        <div class="lesson-eyebrow">Tool — Reference</div>
+        <h1>Phase 1 quick reference</h1>
+        <p>All Phase 1 commands in one place. Bookmark this and refer to it as you practice.</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">setup &amp; config</div>
+        <div class="cmd-ref"><table>
+          <tr><th>Command</th><th>Description</th></tr>
+          <tr><td>git --version</td><td>Check installed Git version</td></tr>
+          <tr><td>git config --global user.name "Name"</td><td>Set your commit author name</td></tr>
+          <tr><td>git config --global user.email "you@x.com"</td><td>Set your commit author email</td></tr>
+          <tr><td>git config --global init.defaultBranch main</td><td>Default branch name = main</td></tr>
+          <tr><td>git config --list</td><td>Show all current config values</td></tr>
+          <tr><td>git config user.name</td><td>Check a specific config value</td></tr>
+        </table></div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">creating &amp; cloning</div>
+        <div class="cmd-ref"><table>
+          <tr><th>Command</th><th>Description</th></tr>
+          <tr><td>git init</td><td>Initialize repo in current directory</td></tr>
+          <tr><td>git init &lt;folder&gt;</td><td>Create new folder and init repo inside it</td></tr>
+          <tr><td>git clone &lt;url&gt;</td><td>Clone a remote repo to current directory</td></tr>
+          <tr><td>git clone &lt;url&gt; &lt;name&gt;</td><td>Clone into a specific folder name</td></tr>
+          <tr><td>git clone --depth 1 &lt;url&gt;</td><td>Shallow clone (only latest commit)</td></tr>
+        </table></div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">daily workflow commands</div>
+        <div class="cmd-ref"><table>
+          <tr><th>Command</th><th>Description</th></tr>
+          <tr><td>git status</td><td>Show working dir &amp; staging area status</td></tr>
+          <tr><td>git add &lt;file&gt;</td><td>Stage a specific file</td></tr>
+          <tr><td>git add .</td><td>Stage all changes in current directory</td></tr>
+          <tr><td>git add -p</td><td>Interactively stage chunks (hunks)</td></tr>
+          <tr><td>git commit -m "message"</td><td>Commit staged changes</td></tr>
+          <tr><td>git commit -am "message"</td><td>Stage all tracked files + commit</td></tr>
+          <tr><td>git commit --amend</td><td>Edit the most recent commit</td></tr>
+          <tr><td>git diff</td><td>Show unstaged changes</td></tr>
+          <tr><td>git diff --staged</td><td>Show staged changes</td></tr>
+          <tr><td>git restore --staged &lt;file&gt;</td><td>Unstage a file</td></tr>
+          <tr><td>git restore &lt;file&gt;</td><td>Discard working dir changes (permanent!)</td></tr>
+        </table></div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">history &amp; inspection</div>
+        <div class="cmd-ref"><table>
+          <tr><th>Command</th><th>Description</th></tr>
+          <tr><td>git log</td><td>Full commit history</td></tr>
+          <tr><td>git log --oneline</td><td>Compact history (one line per commit)</td></tr>
+          <tr><td>git log --oneline --graph --all</td><td>Visual branch graph</td></tr>
+          <tr><td>git log -5</td><td>Show only last 5 commits</td></tr>
+          <tr><td>git log --author="Name"</td><td>Filter commits by author</td></tr>
+          <tr><td>git show &lt;hash&gt;</td><td>Show full details of a commit</td></tr>
+          <tr><td>git diff &lt;hash1&gt; &lt;hash2&gt;</td><td>Compare two commits</td></tr>
+        </table></div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-title">.gitignore patterns</div>
+        <div class="cmd-ref"><table>
+          <tr><th>Pattern</th><th>What it ignores</th></tr>
+          <tr><td>*.log</td><td>All .log files anywhere</td></tr>
+          <tr><td>node_modules/</td><td>Entire node_modules directory</td></tr>
+          <tr><td>.env</td><td>Exactly the .env file</td></tr>
+          <tr><td>/config.json</td><td>config.json only in root</td></tr>
+          <tr><td>!important.log</td><td>Un-ignore — track this despite *.log</td></tr>
+          <tr><td>**/temp</td><td>Any folder named temp, at any depth</td></tr>
+          <tr><td>docs/*.txt</td><td>All .txt files inside docs/ only</td></tr>
+          <tr><td>git rm --cached &lt;file&gt;</td><td>Stop tracking an already-committed file</td></tr>
+        </table></div>
+      </div>
+
+      <div class="lesson-nav">
+        <button class="btn-secondary" onclick="showLesson(6)">← Terminal</button>
+        <button class="btn-primary" onclick="sendPrompt('Take me to Phase 2 of Git — Branching and Merging')">Phase 2: Branching ↗</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ── STATE ───────────────────────────────────────────────── */
+let currentLesson = 0;
+const totalLessons = 6;
+const completedLessons = new Set();
+const completedExercises = new Set();
+
+/* ── NAVIGATION ──────────────────────────────────────────── */
+function showLesson(n) {
+  document.querySelectorAll('.lesson-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('lesson' + n).classList.add('active');
+  document.getElementById('nav' + n).classList.add('active');
+  currentLesson = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextLesson(n) {
+  completedLessons.add(n);
+  document.getElementById('nav' + n).classList.add('done');
+  updateProgress();
+  showLesson(n + 1);
+}
+
+function prevLesson(n) { showLesson(n - 1); }
+
+function updateProgress() {
+  const pct = Math.round((completedLessons.size / totalLessons) * 100);
+  document.getElementById('globalProgress').style.width = pct + '%';
+  document.getElementById('sidebarProgress').style.width = pct + '%';
+  document.getElementById('progressTxt').textContent = completedLessons.size + ' / ' + totalLessons;
+}
+
+/* ── EXERCISE TOGGLE ─────────────────────────────────────── */
+function toggleEx(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.setAttribute('aria-expanded', !isOpen);
+}
+
+function markDone(e, id) {
+  e.stopPropagation();
+  const card = document.getElementById(id);
+  card.classList.toggle('completed');
+  if (card.classList.contains('completed')) {
+    completedExercises.add(id);
+  } else {
+    completedExercises.delete(id);
+  }
+}
+
+/* ── QUIZ ─────────────────────────────────────────────────── */
+function checkQuiz(btn, result, qid) {
+  const opts = btn.closest('.quiz-options').querySelectorAll('.quiz-opt');
+  opts.forEach(b => b.disabled = true);
+  btn.classList.add(result);
+  const fb = document.getElementById(qid + '-feedback');
+  fb.classList.add('show');
+  if (result === 'correct') {
+    fb.classList.add('ok');
+    fb.textContent = '✓ Correct! ' + getFeedback(qid, 'ok');
+  } else {
+    fb.classList.add('no');
+    fb.textContent = '✗ Not quite. ' + getFeedback(qid, 'no');
+    opts.forEach(b => { if (b.onclick.toString().includes("'correct'")) b.classList.add('correct'); });
+  }
+}
+
+function getFeedback(qid, t) {
+  const f = {
+    q1: { ok: 'Git is a local version-control tool. GitHub is one of many platforms that hosts Git repositories online.', no: 'Git works completely offline on your machine. GitHub is just a website for sharing repos.' },
+    q3a: { ok: 'Files must be staged first with git add, then committed. Git never commits anything you haven\'t explicitly staged.', no: 'Remember the 3 states: working dir → staging → repo. You need both git add AND git commit.' },
+    q3b: { ok: 'git restore --staged <file> moves a file back from staging to your working directory without losing changes.', no: 'The modern command is git restore --staged. The older syntax git reset HEAD <file> also works.' },
+  };
+  return f[qid] ? f[qid][t] : '';
+}
+
+/* ── STATES VISUALIZER ───────────────────────────────────── */
+function showStateInfo(state) {
+  const info = {
+    working: { cls:'tip', text:'<strong>Working Directory:</strong> This is your actual project folder on disk. When you open VS Code and edit files, you\'re in the working directory. Files here can be "untracked" (new, Git doesn\'t know about them) or "modified" (changed since last commit).' },
+    staging: { cls:'warn', text:'<strong>Staging Area (also called "Index"):</strong> A preparation zone. When you run git add, changes move from the working directory to staging. Nothing is permanent yet — you can still unstage or discard. The staging area lets you choose exactly which changes go into your next commit.' },
+    repo:    { cls:'ok',   text:'<strong>Repository (.git/):</strong> Permanent storage. When you run git commit, everything in staging gets saved as a snapshot forever. Every commit has a unique SHA-1 hash, your name, timestamp, and message. This history can never be accidentally edited.' },
+  };
+  const box = document.getElementById('state-info-box');
+  const d = info[state];
+  box.className = 'callout ' + d.cls;
+  box.innerHTML = '<span class="callout-icon">' + (state==='working'?'📁':state==='staging'?'📋':'🗄') + '</span><div class="callout-body">' + d.text + '</div>';
+  box.style.display = 'flex';
+}
+
+/* ── .GITIGNORE BUILDER ──────────────────────────────────── */
+const giTemplates = {
+  node:    '# Node.js\nnode_modules/\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\npackage-lock.json\n.npm\n',
+  python:  '# Python\n__pycache__/\n*.py[cod]\n*.pyo\n.venv/\nvenv/\n*.egg-info/\ndist/\nbuild/\n',
+  react:   '# React / Build\nbuild/\ndist/\n.next/\nout/\n.cache/\n',
+  macos:   '# macOS\n.DS_Store\n.AppleDouble\n.LSOverride\n._*\n',
+  windows: '# Windows\nThumbs.db\nehthumbs.db\nDesktop.ini\n$RECYCLE.BIN/\n',
+  vscode:  '# VS Code\n.vscode/*\n!.vscode/settings.json\n!.vscode/tasks.json\n!.vscode/launch.json\n!.vscode/extensions.json\n*.code-workspace\n',
+  env:     '# Environment\n.env\n.env.local\n.env.development.local\n.env.test.local\n.env.production.local\n',
+  logs:    '# Logs\nlogs/\n*.log\nnpm-debug.log*\npid\n*.pid\n*.seed\n',
+};
+const giSelected = new Set();
+
+function toggleGi(el, key) {
+  el.classList.toggle('selected');
+  if (giSelected.has(key)) giSelected.delete(key);
+  else giSelected.add(key);
+  renderGi();
+}
+
+function renderGi() {
+  const out = document.getElementById('gi-output');
+  if (giSelected.size === 0) { out.textContent = '# Select project types above to generate your .gitignore'; return; }
+  out.textContent = [...giSelected].map(k => giTemplates[k]).join('\n');
+}
+
+function clearGitignore() {
+  giSelected.clear();
+  document.querySelectorAll('.gi-chip').forEach(c => c.classList.remove('selected'));
+  renderGi();
+}
+
+/* ── TERMINAL SIMULATOR ──────────────────────────────────── */
+const simState = {
+  files: { 'README.md': '# My Journal', 'day-1.md': 'Today I started learning Git.' },
+  staged: {},
+  committed: [
+    { hash: 'a1b2c3d', msg: 'initial commit — add README', time: '2 days ago' },
+    { hash: 'd8c3f91', msg: 'add day 1 journal entry', time: '1 day ago' },
+    { hash: '4f2a1b3', msg: 'update day 1 notes', time: '3 hours ago' },
+  ],
+  branch: 'main',
+  config: { 'user.name': 'Your Name', 'user.email': 'you@example.com', 'core.editor': 'code --wait', 'init.defaultbranch': 'main', 'color.ui': 'auto' },
+  history: [],
+};
+
+function addLine(html) {
+  const out = document.getElementById('termOutput');
+  const div = document.createElement('div');
+  div.style.lineHeight = '1.7';
+  div.innerHTML = html;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+
+function runSuggest(cmd) {
+  document.getElementById('termInput').value = cmd;
+  runTermCmd();
+}
+
+function handleTermKey(e) {
+  if (e.key === 'Enter') runTermCmd();
+  if (e.key === 'ArrowUp' && simState.history.length) {
+    document.getElementById('termInput').value = simState.history[simState.history.length - 1];
+  }
+}
+
+function runTermCmd() {
+  const input = document.getElementById('termInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+  simState.history.push(raw);
+  addLine('<span style="color:var(--or)">~/my-journal $</span> <span style="color:#e8e6e0">' + escH(raw) + '</span>');
+  input.value = '';
+
+  const cmd = raw.replace(/\s+/g, ' ');
+  const out = simulateCmd(cmd);
+  if (out) addLine('<span style="color:var(--text3);white-space:pre">' + out + '</span>');
+  addLine('');
+}
+
+function escH(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function simulateCmd(cmd) {
+  const t = cmd.trim();
+  const c = t.split(' ');
+
+  if (t === 'git status') {
+    const staged = Object.keys(simState.staged);
+    const unstaged = Object.keys(simState.files).filter(f => !simState.staged[f]);
+    let out = `<span style="color:#e8e6e0">On branch ${simState.branch}\n</span>`;
+    if (staged.length) {
+      out += `<span style="color:#e8e6e0">Changes to be committed:\n</span>`;
+      staged.forEach(f => out += `<span style="color:var(--green)">    modified: ${f}\n</span>`);
+    }
+    if (unstaged.length > simState.committed.length || Math.random() > 0.5) {
+      out += `<span style="color:#e8e6e0">Untracked files:\n</span>`;
+      out += `<span style="color:var(--red)">    (use "git add &lt;file&gt;..." to track)\n</span>`;
+    }
+    if (!staged.length) out += `<span style="color:var(--green)">nothing to commit, working tree clean\n</span>`;
+    return out;
+  }
+
+  if (t === 'git log' || t === 'git log --oneline' || t === 'git log --oneline --graph') {
+    const oneline = t.includes('--oneline');
+    return simState.committed.slice().reverse().map((c, i) => {
+      const head = i === 0 ? `<span style="color:var(--or)">(HEAD -&gt; ${simState.branch})</span> ` : '';
+      if (oneline) return `<span style="color:var(--yellow)">${c.hash}</span> ${head}<span style="color:#e8e6e0">${c.msg}</span>`;
+      return `<span style="color:var(--yellow)">commit ${c.hash}f2a81c9e3b</span>\nAuthor: Your Name &lt;you@example.com&gt;\nDate:   ${c.time}\n\n    ${c.msg}\n`;
+    }).join('\n');
+  }
+
+  if (t === 'git log -5' || t === 'git log --oneline -5') {
+    return simState.committed.slice(-5).reverse().map(c =>
+      `<span style="color:var(--yellow)">${c.hash}</span> <span style="color:#e8e6e0">${c.msg}</span>`
+    ).join('\n');
+  }
+
+  if (t.startsWith('git add')) {
+    const f = c[2] || '.';
+    if (f === '.') Object.keys(simState.files).forEach(k => simState.staged[k] = true);
+    else simState.staged[f] = true;
+    return `<span style="color:var(--green)">staged: ${f}</span>`;
+  }
+
+  if (t.startsWith('git commit -m') || t.startsWith('git commit -am')) {
+    const match = t.match(/"([^"]+)"/);
+    const msg = match ? match[1] : 'commit';
+    const hash = Math.random().toString(16).slice(2, 9);
+    simState.committed.push({ hash, msg, time: 'just now' });
+    simState.staged = {};
+    return `<span style="color:var(--green)">[${simState.branch} ${hash}] ${msg}\n ${Object.keys(simState.files).length} files changed</span>`;
+  }
+
+  if (t === 'git diff') {
+    return `<span style="color:#e8e6e0">diff --git a/day-1.md b/day-1.md\n--- a/day-1.md\n+++ b/day-1.md\n@@ -1 +1,2 @@\n </span><span style="color:#e8e6e0">Today I started learning Git.</span>\n<span style="color:var(--green)">+Git has 3 states: working, staging, repo.</span>`;
+  }
+
+  if (t === 'git diff --staged') {
+    const staged = Object.keys(simState.staged);
+    if (!staged.length) return '<span style="color:var(--text3)">(empty — nothing is staged)</span>';
+    return `<span style="color:var(--green)">diff --staged: ${staged.join(', ')} ready to commit</span>`;
+  }
+
+  if (t === 'git config --list' || t === 'git config -l') {
+    return Object.entries(simState.config).map(([k,v]) =>
+      `<span style="color:var(--yellow)">${k}</span>=<span style="color:#e8e6e0">${v}</span>`
+    ).join('\n');
+  }
+
+  if (t.startsWith('git config ') && c.length === 3) {
+    const key = c[2]; const val = simState.config[key];
+    return val ? `<span style="color:#e8e6e0">${val}</span>` : `<span style="color:var(--red)">error: key does not exist: ${key}</span>`;
+  }
+
+  if (t === 'git --version' || t === 'git version') return `<span style="color:var(--green)">git version 2.49.0</span>`;
+
+  if (t === 'ls' || t === 'ls -la' || t === 'ls -l') {
+    return `<span style="color:var(--blue)">drwxr-xr-x  .git/</span>\n<span style="color:#e8e6e0">-rw-r--r--  .gitignore\n-rw-r--r--  README.md\n-rw-r--r--  day-1.md\n-rw-r--r--  day-2.md</span>`;
+  }
+
+  if (t.startsWith('cd ') || t === 'pwd') return `<span style="color:#e8e6e0">~/my-journal</span>`;
+
+  if (t === 'clear' || t === 'cls') {
+    document.getElementById('termOutput').innerHTML = '<div style="color:var(--text3);font-size:12px"># cleared</div>';
+    return null;
+  }
+
+  if (t === 'git init') return `<span style="color:var(--green)">Initialized empty Git repository in ~/my-journal/.git/</span>`;
+
+  if (t.startsWith('git clone')) return `<span style="color:var(--text2)">Cloning into 'repo'...\nremote: Enumerating objects: done.\n</span><span style="color:var(--green)">Receiving objects: 100% done.</span>`;
+
+  if (t === 'git branch') return `<span style="color:var(--green)">* ${simState.branch}</span>`;
+
+  if (t.startsWith('echo ') || t.startsWith('touch ')) {
+    const file = t.includes('>') ? t.split('>')[1].trim() : c[1];
+    simState.files[file] = '';
+    return `<span style="color:var(--green)">created: ${file}</span>`;
+  }
+
+  if (t.startsWith('git restore --staged')) {
+    const f = c[3];
+    if (f) delete simState.staged[f];
+    return `<span style="color:var(--yellow)">unstaged: ${f || 'file'}</span>`;
+  }
+
+  if (t === 'help' || t === 'git help') {
+    return `<span style="color:var(--text2)">Available: git status, git add, git commit, git log, git diff,\ngit config, git init, git clone, git branch, git restore,\ngit --version, ls, pwd, clear</span>`;
+  }
+
+  return `<span style="color:var(--red)">command not recognized. Type 'help' to see available commands.</span>`;
+}
+
+/* ── COPY CODE ───────────────────────────────────────────── */
+function copyCode(btn) {
+  const body = btn.closest('.code-block').querySelector('.code-body');
+  const text = body.innerText.replace(/^\$ /gm, '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1600);
+  });
+}
+
+/* ── INIT ────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  updateProgress();
+  document.getElementById('termInput').focus();
+});
+</script>
+</body>
+</html>

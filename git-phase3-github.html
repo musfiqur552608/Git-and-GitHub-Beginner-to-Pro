@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Phase 3 — GitHub & Remotes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--bg2:#0f1117;--bg3:#161a22;--bg4:#1e232d;
+  --bd:rgba(255,255,255,0.055);--bd2:rgba(255,255,255,0.1);
+  --tx:#d8dde6;--tx2:#7e8a9a;--tx3:#404855;
+  --pu:#7c6af5;--pu-s:rgba(124,106,245,0.1);--pu-b:rgba(124,106,245,0.2);
+  --teal:#1ab8a0;--teal-s:rgba(26,184,160,0.1);
+  --pink:#e05ca0;--pink-s:rgba(224,92,160,0.1);
+  --gold:#c8952a;--gold-s:rgba(200,149,42,0.1);
+  --red:#e04a45;--red-s:rgba(224,74,69,0.1);
+  --grn:#29a86e;--grn-s:rgba(41,168,110,0.1);
+  --sky:#3a9fe0;--sky-s:rgba(58,159,224,0.1);
+  --mono:'JetBrains Mono',monospace;
+  --serif:'DM Serif Display',Georgia,serif;
+  --sw:268px;--hh:56px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);font-size:14px;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── HEADER ── */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:var(--hh);
+  background:rgba(11,13,18,0.95);backdrop-filter:blur(20px);
+  border-bottom:0.5px solid var(--bd);
+  display:flex;align-items:center;padding:0 1.5rem;gap:12px
+}
+.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.hico{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--pu),var(--pink));
+  display:flex;align-items:center;justify-content:center;font-size:14px
+}
+.hname{font-size:13px;font-weight:500;color:var(--tx)}
+.hname em{color:var(--pu);font-style:normal}
+.hfill{flex:1}
+.hbadge{font-size:10px;padding:3px 11px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx3)}
+.hbadge.active{background:var(--pu-s);border-color:var(--pu-b);color:var(--pu)}
+.hpwrap{position:fixed;top:var(--hh);left:0;right:0;z-index:199;height:2px;background:var(--bd)}
+.hpfill{height:100%;background:linear-gradient(90deg,var(--pu),var(--pink));width:0%;transition:width .35s}
+
+/* ── LAYOUT ── */
+.layout{display:flex;padding-top:calc(var(--hh)+2px);min-height:100vh}
+
+/* ── SIDEBAR ── */
+aside{
+  width:var(--sw);flex-shrink:0;
+  position:fixed;top:calc(var(--hh)+2px);left:0;bottom:0;
+  overflow-y:auto;border-right:0.5px solid var(--bd);background:var(--bg);
+  padding:1.25rem 0 3rem
+}
+.sg{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);padding:0 1.25rem;margin-bottom:4px;margin-top:6px}
+.si{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;margin:0 8px;border-radius:7px;
+  cursor:pointer;color:var(--tx2);font-size:12px;
+  border:none;background:transparent;width:calc(100% - 16px);text-align:left;transition:all .12s
+}
+.si:hover{background:var(--bg3);color:var(--tx)}
+.si.on{background:var(--pu-s);color:var(--pu)}
+.si.dn{color:var(--grn)}
+.sn{width:22px;height:22px;border-radius:5px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tx3);flex-shrink:0;transition:all .12s}
+.si.on .sn{background:var(--pu-s);color:var(--pu)}
+.si.dn .sn{background:var(--grn-s);color:var(--grn)}
+.spbox{margin:1.25rem 1rem 0;padding:12px 14px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:10px}
+.sprow{font-size:10px;color:var(--tx3);display:flex;justify-content:space-between;margin-bottom:5px}
+.spbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.spfill{height:100%;background:linear-gradient(90deg,var(--pu),var(--pink));border-radius:2px;transition:width .4s;width:0%}
+
+/* ── MAIN ── */
+main{margin-left:var(--sw);flex:1;max-width:920px;padding:2.5rem 2.5rem 5rem}
+.sec{display:none;animation:fi .22s ease}.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{background:var(--bg2);border:0.5px solid var(--bd);border-radius:16px;padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-100px;right:-100px;width:320px;height:320px;background:radial-gradient(circle,rgba(124,106,245,.06),transparent 70%);pointer-events:none}
+.ey{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--pu);margin-bottom:.5rem}
+.hero h1{font-family:var(--serif);font-size:28px;line-height:1.2;color:var(--tx);margin-bottom:.65rem}
+.hero h1 i{font-style:italic;color:var(--pu)}
+.hero p{font-size:13px;color:var(--tx2);line-height:1.75;max-width:560px}
+.mr{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.mp{font-size:11px;padding:3px 12px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx2)}
+.mp.pu{border-color:var(--pu-b);color:var(--pu);background:var(--pu-s)}
+.mp.gr{border-color:rgba(41,168,110,.3);color:var(--grn);background:var(--grn-s)}
+
+/* ── CONTENT ── */
+.cb{margin-bottom:1.85rem}
+.ct{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
+.ct::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.prose{font-size:13px;color:var(--tx2);line-height:1.8;margin-bottom:.8rem}
+.prose strong{color:var(--tx);font-weight:500}
+.prose code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:0.5px solid var(--bd);padding:1px 6px;border-radius:4px;color:var(--pu)}
+.prose a{color:var(--sky);text-decoration:none}
+.prose a:hover{text-decoration:underline}
+
+/* ── CODE ── */
+.code{background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.codeh{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bd)}
+.cdd{display:flex;gap:5px}.cd{width:10px;height:10px;border-radius:50%}
+.cfn{font-size:11px;color:var(--tx3);margin-left:4px;flex:1}
+.ccp{margin-left:auto;font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:4px;transition:all .12s;font-family:var(--mono)}
+.ccp:hover{background:var(--bg4);color:var(--tx2)}
+.codeb{padding:.9rem 1.2rem;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre}
+.p{color:var(--pink)} .k{color:var(--pu)} .s{color:var(--gold)}
+.g{color:var(--grn)} .r{color:var(--red)} .c{color:var(--tx3);font-style:italic}
+.t{color:var(--tx)} .d{color:var(--tx2)} .sky{color:var(--sky)} .tl{color:var(--teal)}
+
+/* ── NOTE ── */
+.note{padding:10px 15px;border-radius:8px;margin-bottom:.8rem;font-size:12px;line-height:1.7;display:flex;gap:10px;border:0.5px solid}
+.note i{font-size:14px;flex-shrink:0;font-style:normal}
+.note b{color:var(--tx);font-weight:500}
+.note.tip{background:var(--sky-s);border-color:rgba(58,159,224,.2);color:var(--tx2)}
+.note.warn{background:var(--gold-s);border-color:rgba(200,149,42,.2);color:var(--tx2)}
+.note.ok{background:var(--grn-s);border-color:rgba(41,168,110,.2);color:var(--tx2)}
+.note.danger{background:var(--red-s);border-color:rgba(224,74,69,.2);color:var(--tx2)}
+.note.pu{background:var(--pu-s);border-color:var(--pu-b);color:var(--tx2)}
+
+/* ── TABLE ── */
+.tbl{border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{padding:7px 13px;text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);background:var(--bg3);border-bottom:0.5px solid var(--bd);font-weight:400}
+.tbl td{padding:8px 13px;font-size:12px;border-bottom:0.5px solid var(--bd);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.tbl td:first-child{font-family:var(--mono);color:var(--pu);width:46%;white-space:nowrap}
+.tbl td:last-child{color:var(--tx2)}
+
+/* ── EXERCISE ── */
+.exc{border:0.5px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:.8rem;transition:border-color .15s}
+.exc:hover{border-color:var(--bd2)}
+.exc.dn{border-color:rgba(41,168,110,.3)}
+.exh{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--bg2);border-bottom:0.5px solid var(--bd);cursor:pointer}
+.ck{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;cursor:pointer}
+.ck svg{width:12px;height:12px;stroke:white;stroke-width:2.5;fill:none;opacity:0;transition:opacity .15s}
+.exc.dn .ck{background:var(--grn);border-color:var(--grn)}
+.exc.dn .ck svg{opacity:1}
+.etitle{font-size:13px;font-weight:500;color:var(--tx);flex:1}
+.ebadge{font-size:10px;padding:2px 8px;border-radius:9px;border:0.5px solid}
+.easy{border-color:var(--grn-s);color:var(--grn);background:var(--grn-s)}
+.med{border-color:var(--gold-s);color:var(--gold);background:var(--gold-s)}
+.hard{border-color:var(--red-s);color:var(--red);background:var(--red-s)}
+.etog{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.etog svg{width:12px;height:12px;stroke:var(--tx3);fill:none;transition:transform .15s}
+.exh[aria-expanded="true"] .etog svg{transform:rotate(180deg)}
+.exb{padding:1rem 1.2rem;background:var(--bg2);display:none}
+.exb.open{display:block}
+.sl{list-style:none;display:flex;flex-direction:column;gap:7px}
+.si2{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--tx2);line-height:1.5}
+.sn2{width:20px;height:20px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--bd);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--tx3);flex-shrink:0;margin-top:1px}
+.hint{margin-top:.7rem;padding:9px 13px;background:var(--sky-s);border:0.5px solid rgba(58,159,224,.2);border-radius:7px;font-size:12px;color:var(--tx2);line-height:1.6}
+.hint strong{color:var(--sky)}
+
+/* ── QUIZ ── */
+.qc{border:0.5px solid var(--bd);border-radius:10px;background:var(--bg2);padding:1.35rem;margin-bottom:.8rem}
+.qq{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:.8rem}
+.qo{display:flex;flex-direction:column;gap:5px}
+.qb{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;border:0.5px solid var(--bd);border-radius:7px;cursor:pointer;font-size:12px;color:var(--tx2);background:var(--bg3);transition:all .12s;text-align:left;font-family:var(--mono);width:100%}
+.qb:hover{border-color:var(--bd2);color:var(--tx)}
+.qb.ok{border-color:rgba(41,168,110,.5);background:var(--grn-s);color:var(--grn)}
+.qb.no{border-color:rgba(224,74,69,.5);background:var(--red-s);color:var(--red)}
+.qfb{margin-top:.6rem;padding:9px 13px;border-radius:7px;font-size:12px;color:var(--tx2);display:none;border:0.5px solid}
+.qfb.show{display:block}
+.qfb.ok{background:var(--grn-s);border-color:rgba(41,168,110,.2);color:var(--grn)}
+.qfb.no{background:var(--red-s);border-color:rgba(224,74,69,.2);color:var(--red)}
+
+/* ── REMOTE DIAGRAM ── */
+.rdgm{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.rdgmh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
+.rdgmb{background:var(--bg2);padding:1.5rem;display:flex;align-items:center;justify-content:center;gap:0;min-height:170px}
+.rbox{
+  padding:14px 18px;border-radius:10px;text-align:center;min-width:140px;
+  border:0.5px solid;transition:all .2s;cursor:pointer
+}
+.rbox:hover{transform:scale(1.02)}
+.rbox.local{border-color:rgba(124,106,245,.35);background:var(--pu-s)}
+.rbox.remote{border-color:rgba(26,184,160,.35);background:var(--teal-s)}
+.rbox-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.rbox-sub{font-size:10px;color:var(--tx3)}
+.rbox-cmds{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.rcmd{font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--mono)}
+.rcmd.up{background:rgba(124,106,245,.15);color:var(--pu)}
+.rcmd.dn{background:rgba(26,184,160,.15);color:var(--teal)}
+.rarrow{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 1rem;flex-shrink:0}
+.rline{width:70px;height:1px;position:relative;display:flex;align-items:center}
+.rline-body{flex:1;height:1px;background:var(--bd2)}
+.rline::after{content:'▶';font-size:8px;color:var(--tx3)}
+.rline.rev::before{content:'◀';font-size:8px;color:var(--tx3)}
+.rline.rev::after{display:none}
+.rline-label{font-size:10px;color:var(--tx3);font-family:var(--mono);white-space:nowrap}
+
+/* ── PR SIMULATOR ── */
+.prsim{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.prsimh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.prtitle{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.prstate{font-size:11px;padding:2px 10px;border-radius:9px;font-family:var(--mono)}
+.prstate.open{background:var(--grn-s);color:var(--grn);border:0.5px solid rgba(41,168,110,.2)}
+.prstate.merged{background:var(--pu-s);color:var(--pu);border:0.5px solid var(--pu-b)}
+.prstate.closed{background:var(--red-s);color:var(--red);border:0.5px solid rgba(224,74,69,.2)}
+.prmeta{display:flex;gap:16px;padding:12px 16px;background:var(--bg2);border-bottom:0.5px solid var(--bd);flex-wrap:wrap}
+.prm{font-size:11px;color:var(--tx2)}.prm span{color:var(--tx)}
+.prdesc{padding:12px 16px;background:var(--bg2);font-size:12px;color:var(--tx2);line-height:1.7;border-bottom:0.5px solid var(--bd)}
+.prdiff{padding:10px 14px;background:#090b0e;font-family:var(--mono);font-size:12px;line-height:1.7;border-bottom:0.5px solid var(--bd);overflow-x:auto;white-space:pre}
+.prcomments{padding:12px 16px;background:var(--bg2)}
+.prcmt{display:flex;gap:10px;margin-bottom:12px}
+.prcmt-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.prcmt-body{flex:1}
+.prcmt-header{font-size:11px;color:var(--tx3);margin-bottom:3px}
+.prcmt-text{font-size:12px;color:var(--tx2);line-height:1.6;padding:8px 12px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:7px}
+.prcmt-text.suggestion{border-color:rgba(124,106,245,.25);background:var(--pu-s)}
+.practions{display:flex;gap:8px;padding:12px 16px;background:var(--bg3);border-top:0.5px solid var(--bd);flex-wrap:wrap}
+.praction{font-size:11px;padding:6px 16px;border-radius:7px;cursor:pointer;font-family:var(--mono);border:0.5px solid;transition:all .15s}
+.praction.primary{background:var(--grn);border-color:var(--grn);color:white}
+.praction.primary:hover{filter:brightness(1.1)}
+.praction.secondary{background:var(--bg4);border-color:var(--bd2);color:var(--tx2)}
+.praction.secondary:hover{color:var(--tx)}
+.praction.danger{background:var(--red-s);border-color:rgba(224,74,69,.3);color:var(--red)}
+
+/* ── SSH KEY STEP ── */
+.sshsteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1rem}
+.sshstep{padding:14px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px;position:relative}
+.sshstep-num{font-size:10px;color:var(--pu);font-family:var(--mono);margin-bottom:6px}
+.sshstep-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:4px}
+.sshstep-body{font-size:11.5px;color:var(--tx2);line-height:1.5}
+
+/* ── WORKFLOW DIAGRAM ── */
+.wfdiag{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.wfdiagh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.wfsteps{display:grid;grid-template-columns:repeat(5,1fr);background:var(--bg2);position:relative}
+.wfstep{padding:14px 10px;text-align:center;position:relative}
+.wfstep::after{content:'→';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:12px;z-index:1}
+.wfstep:last-child::after{display:none}
+.wficon{font-size:20px;margin-bottom:6px}
+.wftitle{font-size:11px;font-weight:500;color:var(--tx);margin-bottom:3px;line-height:1.3}
+.wfcmd{font-size:10px;color:var(--pu);font-family:var(--mono);margin-top:5px;padding:2px 6px;background:var(--pu-s);border-radius:4px;display:inline-block}
+
+/* ── CLI DEMO ── */
+.clisim{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.clih{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bd)}
+.clititle{font-size:11px;color:var(--tx3);margin:0 auto}
+.cliout{background:#070910;padding:1rem 1.2rem;font-size:12.5px;min-height:150px;max-height:280px;overflow-y:auto;line-height:1.7;font-family:var(--mono)}
+.cliinrow{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg2);border-top:0.5px solid var(--bd)}
+.cliprompt{color:var(--pu);font-size:12.5px;flex-shrink:0}
+.cliinput{flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:var(--mono);font-size:12.5px;caret-color:var(--pu)}
+.clirun{font-size:11px;padding:5px 14px;border-radius:6px;background:var(--pu-s);border:0.5px solid var(--pu-b);color:var(--pu);cursor:pointer;font-family:var(--mono);transition:all .13s}
+.clirun:hover{background:var(--pu);color:white}
+.clisug{display:flex;gap:6px;padding:6px 14px;background:var(--bg2);border-top:0.5px solid var(--bd);flex-wrap:wrap}
+.csug{font-size:10px;padding:2px 9px;border-radius:5px;background:var(--bg3);border:0.5px solid var(--bd);color:var(--tx3);cursor:pointer;transition:all .12s;font-family:var(--mono)}
+.csug:hover{border-color:var(--pu-b);color:var(--pu)}
+
+/* ── COMPARE GRID ── */
+.cmpg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.cmpc{border:0.5px solid var(--bd);border-radius:10px;overflow:hidden}
+.cmpch{padding:10px 14px;font-size:12px;font-weight:500;border-bottom:0.5px solid var(--bd)}
+.cmpch.pu{background:var(--pu-s);color:var(--pu)}
+.cmpch.tl{background:var(--teal-s);color:var(--teal)}
+.cmpcb{padding:.85rem 1rem;background:var(--bg2)}
+.cmpl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.cmpl li{font-size:12px;color:var(--tx2);display:flex;gap:7px;line-height:1.4}
+.cmpl li::before{content:'→';color:var(--tx3);flex-shrink:0}
+
+/* ── NAV ── */
+.lnav{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;padding-top:1.5rem;border-top:0.5px solid var(--bd)}
+.btnp{padding:10px 22px;background:var(--pu);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all .13s;display:flex;align-items:center;gap:7px}
+.btnp:hover{filter:brightness(1.15);transform:translateX(2px)}
+.btns{padding:10px 18px;background:var(--bg3);color:var(--tx2);border:0.5px solid var(--bd);border-radius:7px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .13s}
+.btns:hover{background:var(--bg4);color:var(--tx)}
+
+/* ── COMPLETION GRID ── */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ctick{padding:9px 13px;background:var(--grn-s);border:0.5px solid rgba(41,168,110,.2);border-radius:7px;font-size:12px;color:var(--grn)}
+
+@media(max-width:780px){
+  :root{--sw:0px}
+  aside{display:none}
+  main{margin-left:0;padding:1.5rem 1.25rem 3rem}
+  .cmpg{grid-template-columns:1fr}
+  .wfsteps{grid-template-columns:1fr 1fr}
+  .wfstep::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hbrand" href="#">
+    <div class="hico">🐙</div>
+    <span class="hname"><em>git</em> / phase-3</span>
+  </a>
+  <div class="hfill"></div>
+  <div class="hbadge active">GitHub & Remotes</div>
+  <div class="hbadge">weeks 5–7</div>
+</header>
+<div class="hpwrap"><div class="hpfill" id="gp"></div></div>
+
+<div class="layout">
+<aside>
+  <div class="sg">lessons</div>
+  <button class="si on" onclick="go(0)" id="n0"><span class="sn">1</span>GitHub setup & SSH keys</button>
+  <button class="si" onclick="go(1)" id="n1"><span class="sn">2</span>push · pull · fetch</button>
+  <button class="si" onclick="go(2)" id="n2"><span class="sn">3</span>Fork & PR workflow</button>
+  <button class="si" onclick="go(3)" id="n3"><span class="sn">4</span>Code review</button>
+  <button class="si" onclick="go(4)" id="n4"><span class="sn">5</span>Issues, Projects & Labels</button>
+  <button class="si" onclick="go(5)" id="n5"><span class="sn">6</span>GitHub CLI (gh)</button>
+  <div class="sg" style="margin-top:8px">tools</div>
+  <button class="si" onclick="go(6)" id="n6"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Remote diagram</button>
+  <button class="si" onclick="go(7)" id="n7"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>PR simulator</button>
+  <button class="si" onclick="go(8)" id="n8"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>CLI sandbox</button>
+  <button class="si" onclick="go(9)" id="n9"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Quick reference</button>
+  <div class="spbox">
+    <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
+    <div class="spbar"><div class="spfill" id="spf"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ══════════════════════════════════════
+     L0 — GitHub Setup & SSH Keys
+══════════════════════════════════════ -->
+<section class="sec on" id="s0">
+  <div class="hero">
+    <div class="ey">Lesson 01 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>GitHub setup &amp; <i>SSH keys</i></h1>
+    <p>Before you can push code to GitHub, you need two things: an account and a way to authenticate. SSH keys are the professional, password-free way to connect. Set this up once and never think about it again.</p>
+    <div class="mr"><span class="mp pu">~30 min</span><span class="mp gr">one-time setup</span><span class="mp">critical</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github account essentials</div>
+    <div class="sshsteps">
+      <div class="sshstep">
+        <div class="sshstep-num">step 01</div>
+        <div class="sshstep-title">Create account</div>
+        <div class="sshstep-body">Go to <strong>github.com</strong>. Use the same email you set in <code>git config user.email</code>. Choose a professional username — it'll be your developer identity.</div>
+      </div>
+      <div class="sshstep">
+        <div class="sshstep-num">step 02</div>
+        <div class="sshstep-title">Set up your profile</div>
+        <div class="sshstep-body">Add a photo, bio, and location. Enable two-factor authentication (2FA) — GitHub requires it for pushing code.</div>
+      </div>
+      <div class="sshstep">
+        <div class="sshstep-num">step 03</div>
+        <div class="sshstep-title">SSH or HTTPS?</div>
+        <div class="sshstep-body"><strong>SSH</strong>: key-based, no password prompts, recommended. <strong>HTTPS</strong>: simpler to start, requires a Personal Access Token (PAT) instead of password.</div>
+      </div>
+      <div class="sshstep">
+        <div class="sshstep-num">step 04</div>
+        <div class="sshstep-title">Verify connection</div>
+        <div class="sshstep-body">Run <code>ssh -T git@github.com</code> after setup. You should see: <em>"Hi username! You've successfully authenticated."</em></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">generate & add an SSH key</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">terminal — SSH key setup (do this once)</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># Step 1: Generate a new ED25519 key (modern, faster than RSA)</span>
+<span class="p">$</span> <span class="k">ssh-keygen</span> <span class="s">-t ed25519 -C "you@example.com"</span>
+<span class="d">Generating public/private ed25519 key pair.
+Enter file in which to save the key (~/.ssh/id_ed25519): [press Enter]
+Enter passphrase (recommended): ••••••••
+Your identification has been saved in ~/.ssh/id_ed25519
+Your public key has been saved in ~/.ssh/id_ed25519.pub</span>
+
+<span class="c"># Step 2: Start the SSH agent</span>
+<span class="p">$</span> <span class="k">eval</span> <span class="s">"$(ssh-agent -s)"</span>
+<span class="g">Agent pid 12345</span>
+
+<span class="c"># Step 3: Add your key to the agent</span>
+<span class="p">$</span> <span class="k">ssh-add</span> ~/.ssh/id_ed25519
+
+<span class="c"># Step 4: Copy your PUBLIC key to clipboard</span>
+<span class="p">$</span> <span class="k">cat</span> ~/.ssh/id_ed25519.pub         <span class="c"># macOS/Linux: print it</span>
+<span class="p">$</span> <span class="k">clip</span> &lt; ~/.ssh/id_ed25519.pub      <span class="c"># Windows: copy to clipboard</span>
+<span class="p">$</span> <span class="k">pbcopy</span> &lt; ~/.ssh/id_ed25519.pub    <span class="c"># macOS: copy to clipboard</span>
+
+<span class="c"># Step 5: Go to GitHub → Settings → SSH and GPG keys → New SSH key
+#          Paste your PUBLIC key there. Title it (e.g. "MacBook 2025")</span>
+
+<span class="c"># Step 6: Test the connection</span>
+<span class="p">$</span> <span class="k">ssh</span> <span class="s">-T git@github.com</span>
+<span class="g">Hi yourusername! You've successfully authenticated.</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Public vs Private key:</b> Your <code>id_ed25519.pub</code> (public) goes on GitHub — share freely. Your <code>id_ed25519</code> (private, no .pub) stays on your machine ONLY. Never share or expose the private key.</div></div>
+    <div class="note warn"><i>⚠</i><div><b>Windows users:</b> Use Git Bash (not PowerShell/CMD) for SSH setup. Or enable the OpenSSH agent in Windows Services. The <code>clip</code> command works in Git Bash to copy keys.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">personal access tokens (PAT) — HTTPS alternative</div>
+    <p class="prose">If you use HTTPS instead of SSH, GitHub no longer accepts your account password for Git operations. You need a <strong>Personal Access Token (PAT)</strong> — use it wherever a password is asked.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">creating a PAT</span></div>
+      <div class="codeb"><span class="c"># Go to: GitHub → Settings → Developer settings → Personal access tokens</span>
+<span class="c"># → Tokens (classic) → Generate new token</span>
+<span class="c"># Select scopes: repo, workflow, read:org</span>
+<span class="c"># Copy the token immediately — you won't see it again!</span>
+
+<span class="c"># Store it with Git credential helper so you don't retype it:</span>
+<span class="p">$</span> <span class="k">git config</span> <span class="s">--global</span> credential.helper store
+
+<span class="c"># Next time you push, enter your username + PAT as password.
+# Git will remember it after the first successful push.</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — connect your machine to github</div>
+    <div class="exc" id="e0-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e0-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Generate SSH key and connect to GitHub</span>
+        <span class="ebadge easy">setup</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Create a GitHub account at github.com (if you don't have one)</li>
+          <li class="si2"><span class="sn2">2</span>Enable 2FA: Settings → Password and authentication → Two-factor authentication</li>
+          <li class="si2"><span class="sn2">3</span>Run the SSH key generation commands above step by step</li>
+          <li class="si2"><span class="sn2">4</span>Add the public key to GitHub: Settings → SSH and GPG keys → New SSH key</li>
+          <li class="si2"><span class="sn2">5</span>Run <code>ssh -T git@github.com</code> — you should see your username in the output</li>
+          <li class="si2"><span class="sn2">6</span>Go to GitHub, create a new empty repo called <code>my-journal</code>. Don't initialize with README.</li>
+          <li class="si2"><span class="sn2">7</span>Follow the "push an existing repo" commands GitHub shows you after creation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <span style="font-size:12px;color:var(--tx3)">lesson 1 of 6</span>
+    <button class="btnp" onclick="nxt(0)">Next: push · pull · fetch →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L1 — push, pull, fetch
+══════════════════════════════════════ -->
+<section class="sec" id="s1">
+  <div class="hero">
+    <div class="ey">Lesson 02 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>push · pull · <i>fetch</i></h1>
+    <p>These three commands connect your local Git repo to the world. Understanding the difference between fetch and pull is one of the most important Git nuances — and most developers get it wrong for years.</p>
+    <div class="mr"><span class="mp pu">~40 min</span><span class="mp gr">core commands</span><span class="mp">daily use</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">the remote model — how git tracks remotes</div>
+    <p class="prose">When you clone a repo, Git creates a <strong>remote tracking branch</strong> — a local read-only copy of the remote branch at the time of your last communication. This is what <code>origin/main</code> means: "where main was on origin last time we talked."</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">understanding remotes</span></div>
+      <div class="codeb"><span class="c"># List all remotes (URL + name)</span>
+<span class="p">$</span> <span class="k">git remote</span> <span class="s">-v</span>
+<span class="d">origin  git@github.com:you/my-journal.git (fetch)
+origin  git@github.com:you/my-journal.git (push)</span>
+
+<span class="c"># Add a remote to an existing local repo</span>
+<span class="p">$</span> <span class="k">git remote add</span> origin git@github.com:you/my-journal.git
+
+<span class="c"># See local branches vs remote tracking branches</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-vv</span>
+<span class="g">* main</span>    <span class="d">4f2a1b3 [origin/main] update day 3 notes</span>
+<span class="d">  feature  abc1234 [origin/feature: ahead 2] add weather</span>
+
+<span class="c"># "ahead 2" = you have 2 local commits not yet pushed
+# "behind 3" = remote has 3 commits you haven't pulled yet</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git push — sending local commits to github</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git push — all variations</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># First push — set upstream tracking with -u</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">-u</span> origin main
+<span class="d">Branch 'main' set up to track remote branch 'main' from 'origin'.
+To git@github.com:you/my-journal.git
+ * [new branch]  main → main</span>
+
+<span class="c"># After -u is set, just use git push</span>
+<span class="p">$</span> <span class="k">git push</span>
+
+<span class="c"># Push a feature branch (for Pull Requests)</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">-u</span> origin feature/login
+
+<span class="c"># Delete a remote branch</span>
+<span class="p">$</span> <span class="k">git push</span> origin <span class="s">--delete</span> feature/login
+
+<span class="c"># Push all branches at once</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">--all</span> origin
+
+<span class="c"># Force push (DANGEROUS — only on your own branches)</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">--force-with-lease</span>  <span class="c"># safer than --force</span></div>
+    </div>
+    <div class="note danger"><i>🚫</i><div><b>Never force push to main/shared branches.</b> <code>--force</code> rewrites remote history and breaks everyone who has pulled. If you must force push your own feature branch, use <code>--force-with-lease</code> — it checks nobody else pushed since your last pull.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">fetch vs pull — the critical difference</div>
+    <div class="cmpg">
+      <div class="cmpc">
+        <div class="cmpch pu">git fetch — safe, look before you leap</div>
+        <div class="cmpcb">
+          <ul class="cmpl">
+            <li>Downloads remote commits to <code>origin/main</code></li>
+            <li>Does NOT touch your local branch at all</li>
+            <li>You inspect changes, then merge manually</li>
+            <li>Use when: you want to see what changed remotely without integrating yet</li>
+            <li>Zero risk of conflicts or broken code</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cmpc">
+        <div class="cmpch tl">git pull — fetch + merge in one step</div>
+        <div class="cmpcb">
+          <ul class="cmpl">
+            <li>Downloads AND integrates remote changes</li>
+            <li>Equivalent to: fetch + merge (or + rebase)</li>
+            <li>Your working directory is updated immediately</li>
+            <li>Use when: you trust the remote and want to sync fast</li>
+            <li>Can cause conflicts if you have uncommitted local changes</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">fetch vs pull in practice</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># ── FETCH (safe) ──────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git fetch</span> origin              <span class="c"># download all remote updates</span>
+<span class="p">$</span> <span class="k">git log</span> <span class="s">origin/main --oneline</span> <span class="c"># see what they did</span>
+<span class="p">$</span> <span class="k">git diff</span> main origin/main     <span class="c"># diff your local vs remote</span>
+<span class="p">$</span> <span class="k">git merge</span> origin/main          <span class="c"># merge when you're ready</span>
+
+<span class="c"># ── PULL (convenient) ─────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git pull</span>                       <span class="c"># fetch + merge (default)</span>
+<span class="p">$</span> <span class="k">git pull</span> <span class="s">--rebase</span>             <span class="c"># fetch + rebase (cleaner history)</span>
+<span class="p">$</span> <span class="k">git pull</span> origin main          <span class="c"># explicit: from origin, branch main</span>
+
+<span class="c"># ── FETCH WITH PRUNE ──────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git fetch</span> <span class="s">--prune</span>             <span class="c"># remove deleted remote branch refs</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Pro habit:</b> Use <code>git pull --rebase</code> by default. It avoids unnecessary merge commits when syncing with the remote, keeping history linear. Set it globally: <code>git config --global pull.rebase true</code></div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — push your journal to github</div>
+    <div class="exc" id="e1-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e1-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Push my-journal to GitHub and practice sync</span>
+        <span class="ebadge easy">easy</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Go to github.com → New repository → name it <code>my-journal</code> → Create (no README)</li>
+          <li class="si2"><span class="sn2">2</span>In your local repo: <code>git remote add origin git@github.com:YOURUSERNAME/my-journal.git</code></li>
+          <li class="si2"><span class="sn2">3</span>Push: <code>git push -u origin main</code> — your commits appear on GitHub!</li>
+          <li class="si2"><span class="sn2">4</span>On GitHub, edit README.md directly in the browser. Commit the change there.</li>
+          <li class="si2"><span class="sn2">5</span>Locally: <code>git fetch origin</code> — then <code>git log origin/main --oneline</code> to see the remote commit</li>
+          <li class="si2"><span class="sn2">6</span>Merge it: <code>git merge origin/main</code> — now your local is in sync</li>
+          <li class="si2"><span class="sn2">7</span>Bonus: create a feature branch, push it, and find it on GitHub under "branches"</li>
+        </ul>
+        <div class="hint"><strong>Troubleshooting:</strong> If push is rejected with "failed to push some refs", someone else (or you via GitHub editor) pushed commits you don't have. Run <code>git pull --rebase</code> first, then push again.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(1)">← Back</button>
+    <button class="btnp" onclick="nxt(1)">Next: Fork & PR workflow →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L2 — Fork & PR workflow
+══════════════════════════════════════ -->
+<section class="sec" id="s2">
+  <div class="hero">
+    <div class="ey">Lesson 03 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>Fork &amp; <i>Pull Request</i> workflow</h1>
+    <p>The fork-and-PR model is how all open source collaboration works — and how most professional teams collaborate on GitHub. Master this and you can contribute to any project on Earth.</p>
+    <div class="mr"><span class="mp pu">~50 min</span><span class="mp gr">team workflow</span><span class="mp">industry standard</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">fork vs clone — what's the difference?</div>
+    <div class="cmpg">
+      <div class="cmpc">
+        <div class="cmpch pu">Fork (GitHub server-side copy)</div>
+        <div class="cmpcb"><ul class="cmpl">
+          <li>Creates YOUR copy of someone else's repo on GitHub</li>
+          <li>You have full write access to your fork</li>
+          <li>Used to contribute to repos you don't own</li>
+          <li>Stays connected to the original (upstream)</li>
+          <li>Click "Fork" button on GitHub — that's it</li>
+        </ul></div>
+      </div>
+      <div class="cmpc">
+        <div class="cmpch tl">Clone (local copy)</div>
+        <div class="cmpcb"><ul class="cmpl">
+          <li>Downloads any repo (yours or forked) to your machine</li>
+          <li>You need write permission to push back</li>
+          <li>Always after forking: <code>git clone &lt;your-fork-url&gt;</code></li>
+          <li>Sets <code>origin</code> to your fork</li>
+          <li>You manually add <code>upstream</code> remote for the original</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">the complete fork → PR workflow</div>
+    <div class="wfdiag">
+      <div class="wfdiagh">fork → clone → branch → push → PR → merge</div>
+      <div class="wfsteps">
+        <div class="wfstep">
+          <div class="wficon">🍴</div>
+          <div class="wftitle">Fork on GitHub</div>
+          <div class="wfcmd">click Fork</div>
+        </div>
+        <div class="wfstep">
+          <div class="wficon">📥</div>
+          <div class="wftitle">Clone your fork</div>
+          <div class="wfcmd">git clone</div>
+        </div>
+        <div class="wfstep">
+          <div class="wficon">🌿</div>
+          <div class="wftitle">Create branch & commit</div>
+          <div class="wfcmd">git switch -c</div>
+        </div>
+        <div class="wfstep">
+          <div class="wficon">📤</div>
+          <div class="wftitle">Push to your fork</div>
+          <div class="wfcmd">git push</div>
+        </div>
+        <div class="wfstep">
+          <div class="wficon">🔀</div>
+          <div class="wftitle">Open Pull Request</div>
+          <div class="wfcmd">gh pr create</div>
+        </div>
+      </div>
+    </div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">complete fork workflow — every step</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># 1. Fork on GitHub (click the Fork button) — creates:
+#    github.com/YOU/original-repo</span>
+
+<span class="c"># 2. Clone YOUR fork (not the original)</span>
+<span class="p">$</span> <span class="k">git clone</span> git@github.com:YOU/original-repo.git
+<span class="p">$</span> <span class="k">cd</span> original-repo
+
+<span class="c"># 3. Add the original repo as "upstream"</span>
+<span class="p">$</span> <span class="k">git remote add</span> upstream git@github.com:OWNER/original-repo.git
+<span class="p">$</span> <span class="k">git remote</span> <span class="s">-v</span>
+<span class="d">origin   git@github.com:YOU/original-repo.git (fetch/push)
+upstream git@github.com:OWNER/original-repo.git (fetch/push)</span>
+
+<span class="c"># 4. Create a feature branch for your changes</span>
+<span class="p">$</span> <span class="k">git switch</span> <span class="s">-c</span> fix/typo-in-readme
+
+<span class="c"># 5. Make your changes, commit</span>
+<span class="p">$</span> <span class="k">git add</span> README.md
+<span class="p">$</span> <span class="k">git commit</span> <span class="s">-m</span> <span class="t">"docs: fix typo in installation section"</span>
+
+<span class="c"># 6. Push your branch to YOUR fork (not upstream)</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">-u</span> origin fix/typo-in-readme
+
+<span class="c"># 7. Open a Pull Request on GitHub
+#    GitHub shows a "Compare & pull request" banner — click it!
+#    OR use the GitHub CLI:</span>
+<span class="p">$</span> <span class="k">gh pr create</span> <span class="s">--fill</span>
+
+<span class="c"># ── STAYING IN SYNC WITH UPSTREAM ──────────────────────</span>
+<span class="c"># While waiting for your PR to be reviewed:</span>
+<span class="p">$</span> <span class="k">git fetch</span> upstream
+<span class="p">$</span> <span class="k">git rebase</span> upstream/main    <span class="c"># or: git merge upstream/main</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">--force-with-lease</span> <span class="c"># update your PR branch</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">writing a good pull request</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">PR template — what to include</span></div>
+      <div class="codeb"><span class="c">## What does this PR do?</span>
+<span class="d">Fixes the login button not responding on mobile Safari (iOS 16+).
+The issue was a CSS `pointer-events: none` applied too broadly.</span>
+
+<span class="c">## Why?</span>
+<span class="d">Closes #142 — bug reported by 3 users this week.</span>
+
+<span class="c">## How to test</span>
+<span class="d">1. Open app on iOS Safari
+2. Tap the Login button
+3. Should navigate to /dashboard (was broken before this fix)</span>
+
+<span class="c">## Screenshots</span>
+<span class="d">Before | After</span>
+<span class="r">[broken screenshot]</span> <span class="g">[working screenshot]</span>
+
+<span class="c">## Checklist</span>
+<span class="g">- [x] Tests pass
+- [x] No console errors
+- [x] Tested on iOS Safari 16 and Chrome Mobile</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Small PRs merge faster.</b> Keep PRs focused on one thing. A 50-line PR gets reviewed in 5 minutes. A 1000-line PR sits for days. One feature or fix per PR is the golden rule.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — simulate the full fork-to-PR cycle</div>
+    <div class="exc" id="e2-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e2-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Contribute to a real public repo (or self-fork)</span>
+        <span class="ebadge med">medium</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Go to <code>github.com/firstcontributions/first-contributions</code> — a repo designed for first PRs</li>
+          <li class="si2"><span class="sn2">2</span>Click Fork. Clone your fork: <code>git clone git@github.com:YOU/first-contributions.git</code></li>
+          <li class="si2"><span class="sn2">3</span>Add yourself to <code>Contributors.md</code> on a feature branch: <code>git switch -c add-your-name</code></li>
+          <li class="si2"><span class="sn2">4</span>Commit and push to your fork: <code>git push -u origin add-your-name</code></li>
+          <li class="si2"><span class="sn2">5</span>Open the PR on GitHub. Fill in a description. Submit it.</li>
+          <li class="si2"><span class="sn2">6</span>Alternatively: create a second GitHub account, fork YOUR own my-journal, and submit a PR to yourself. Review and merge it.</li>
+        </ul>
+        <div class="hint"><strong>Pro move:</strong> After your PR is merged, sync your fork with upstream: <code>git fetch upstream && git merge upstream/main && git push</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(2)">← Back</button>
+    <button class="btnp" onclick="nxt(2)">Next: Code review →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L3 — Code Review
+══════════════════════════════════════ -->
+<section class="sec" id="s3">
+  <div class="hero">
+    <div class="ey">Lesson 04 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>Code review on <i>GitHub</i></h1>
+    <p>Code review is where most professional collaboration actually happens. Learn to give reviews that help, receive feedback without ego, and use GitHub's review tools like a pro.</p>
+    <div class="mr"><span class="mp pu">~35 min</span><span class="mp gr">team skill</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github review types — what each means</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">PR review states explained</span></div>
+      <div class="codeb"><span class="g">✓ Approved</span>      <span class="c">← "Looks good, merge when ready" — LGTM</span>
+<span class="r">✗ Request changes</span>  <span class="c">← "Fix these things before merging"</span>
+<span class="d">○ Comment</span>          <span class="c">← "I have notes but not blocking the merge"</span>
+
+<span class="c">Types of review comments:</span>
+<span class="k">Nitpick (nit):</span>  <span class="d">"nit: prefer const over let here"</span>
+<span class="k">Suggestion:</span>      <span class="d">Actual code suggestion the author can apply with one click</span>
+<span class="k">Question:</span>        <span class="d">"Why did you choose this approach over X?"</span>
+<span class="k">Blocker:</span>         <span class="d">"This will cause a race condition, must fix before merge"</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">giving good code review — the rules</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+      <div style="padding:12px 14px;background:var(--grn-s);border:0.5px solid rgba(41,168,110,.2);border-radius:10px">
+        <div style="font-size:11px;color:var(--grn);margin-bottom:7px">✓ good review habits</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--tx2)">
+          <li>→ Review the code, not the person</li>
+          <li>→ Be specific — "line 42: consider X because Y"</li>
+          <li>→ Distinguish nitpicks from blockers</li>
+          <li>→ Explain your reasoning, not just what</li>
+          <li>→ Approve promptly — don't leave PRs hanging</li>
+          <li>→ Use GitHub Suggestions for small fixes</li>
+        </ul>
+      </div>
+      <div style="padding:12px 14px;background:var(--red-s);border:0.5px solid rgba(224,74,69,.2);border-radius:10px">
+        <div style="font-size:11px;color:var(--red);margin-bottom:7px">✗ avoid these</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--tx2)">
+          <li>→ "This is bad" with no explanation</li>
+          <li>→ Blocking on personal style preference</li>
+          <li>→ Reviewing tone: "obviously this is wrong"</li>
+          <li>→ Demanding rewrites for minor issues</li>
+          <li>→ Leaving a PR open for days with no response</li>
+          <li>→ Approving without actually reading</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github review commands</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">reviewing & responding to PRs</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># View PR diff locally</span>
+<span class="p">$</span> <span class="k">gh pr checkout</span> 42        <span class="c"># switch to PR branch locally</span>
+<span class="p">$</span> <span class="k">gh pr diff</span> 42             <span class="c"># view the diff in terminal</span>
+<span class="p">$</span> <span class="k">gh pr view</span> 42             <span class="c"># view PR details in terminal</span>
+
+<span class="c"># Submit review via CLI</span>
+<span class="p">$</span> <span class="k">gh pr review</span> 42 <span class="s">--approve</span>
+<span class="p">$</span> <span class="k">gh pr review</span> 42 <span class="s">--request-changes</span> <span class="s">-b</span> <span class="t">"Please fix the auth bug on line 47"</span>
+<span class="p">$</span> <span class="k">gh pr review</span> 42 <span class="s">--comment</span> <span class="s">-b</span> <span class="t">"Looks mostly good, left one nit"</span>
+
+<span class="c"># Merge a PR after approval</span>
+<span class="p">$</span> <span class="k">gh pr merge</span> 42 <span class="s">--squash</span>   <span class="c"># squash all commits into one</span>
+<span class="p">$</span> <span class="k">gh pr merge</span> 42 <span class="s">--merge</span>    <span class="c"># preserve commits with merge commit</span>
+<span class="p">$</span> <span class="k">gh pr merge</span> 42 <span class="s">--rebase</span>   <span class="c"># rebase onto base branch</span>
+
+<span class="c"># After merging, clean up</span>
+<span class="p">$</span> <span class="k">git switch</span> main
+<span class="p">$</span> <span class="k">git pull</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-d</span> feature/my-branch</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — give and receive a code review</div>
+    <div class="exc" id="e3-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e3-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Simulate review: open a PR to yourself and review it</span>
+        <span class="ebadge med">medium</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>On your <code>my-journal</code> repo, create a branch <code>feature/add-goals</code>, add a <code>goals.md</code> file, commit and push</li>
+          <li class="si2"><span class="sn2">2</span>Open a Pull Request from <code>feature/add-goals</code> → <code>main</code> on GitHub</li>
+          <li class="si2"><span class="sn2">3</span>In the PR, click "Files changed" — practice adding a line comment on a specific line</li>
+          <li class="si2"><span class="sn2">4</span>Try "Add a suggestion" — edit the proposed code in the suggestion box. Submit your review.</li>
+          <li class="si2"><span class="sn2">5</span>Apply the suggestion by clicking "Commit suggestion" — watch the branch auto-update</li>
+          <li class="si2"><span class="sn2">6</span>Approve and merge the PR. Delete the branch via the GitHub UI.</li>
+          <li class="si2"><span class="sn2">7</span>Locally: <code>git pull && git branch -d feature/add-goals</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(3)">← Back</button>
+    <button class="btnp" onclick="nxt(3)">Next: Issues & Projects →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L4 — Issues, Projects, Labels
+══════════════════════════════════════ -->
+<section class="sec" id="s4">
+  <div class="hero">
+    <div class="ey">Lesson 05 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>Issues · Projects · <i>Labels</i></h1>
+    <p>GitHub is more than hosting — it's a project management platform. Issues track bugs and features. Projects organize them on a kanban board. Labels and milestones keep large projects sane.</p>
+    <div class="mr"><span class="mp pu">~25 min</span><span class="mp gr">project management</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">issues — the backbone of project tracking</div>
+    <p class="prose">Every bug report, feature request, or task lives as a GitHub Issue. Issues are numbered (#1, #2…) and can be referenced in commits and PRs to automatically close them on merge.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">linking commits & PRs to issues</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># Closes issue #42 when this PR merges (magic keywords)</span>
+<span class="p">$</span> <span class="k">git commit</span> <span class="s">-m</span> <span class="t">"fix: resolve login null crash — closes #42"</span>
+
+<span class="c"># Other keywords that auto-close issues:</span>
+<span class="c"># fix, fixes, fixed, close, closes, closed</span>
+<span class="c"># resolve, resolves, resolved</span>
+
+<span class="c"># Reference an issue without closing it</span>
+<span class="p">$</span> <span class="k">git commit</span> <span class="s">-m</span> <span class="t">"refactor: improve auth module (related to #38)"</span>
+
+<span class="c"># Create an issue via CLI</span>
+<span class="p">$</span> <span class="k">gh issue create</span> <span class="s">--title</span> <span class="t">"Login broken on Safari iOS"</span> <span class="s">--label</span> bug
+<span class="p">$</span> <span class="k">gh issue list</span>                  <span class="c"># list open issues</span>
+<span class="p">$</span> <span class="k">gh issue view</span> 42               <span class="c"># view issue details</span>
+<span class="p">$</span> <span class="k">gh issue close</span> 42              <span class="c"># close an issue</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">standard github labels</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--red-s);border:0.5px solid rgba(224,74,69,.3);color:var(--red)">🐛 bug</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:rgba(41,168,110,.1);border:0.5px solid rgba(41,168,110,.3);color:var(--grn)">✨ enhancement</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--sky-s);border:0.5px solid rgba(58,159,224,.3);color:var(--sky)">📖 documentation</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--gold-s);border:0.5px solid rgba(200,149,42,.3);color:var(--gold)">🆘 help wanted</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--pu-s);border:0.5px solid var(--pu-b);color:var(--pu)">🌱 good first issue</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--bg3);border:0.5px solid var(--bd2);color:var(--tx2)">⛔ wontfix</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--pink-s);border:0.5px solid rgba(224,92,160,.3);color:var(--pink)">❓ question</span>
+      <span style="padding:3px 12px;border-radius:12px;font-size:11px;background:var(--bg3);border:0.5px solid var(--bd2);color:var(--tx2)">🔁 duplicate</span>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>good first issue</b> is the label to look for when you want to contribute to open source. Maintainers use it to mark beginner-friendly issues. Filter by it on any large repo to find your first contribution.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github projects — kanban boards</div>
+    <p class="prose">GitHub Projects (v2) gives you a spreadsheet-like board for tracking issues and PRs. You can create custom fields, group by status, and automate card movement.</p>
+    <div style="border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:1rem">
+      <div style="padding:8px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3)">example kanban board</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:var(--bg2);gap:0">
+        <div style="padding:12px;border-right:0.5px solid var(--bd)">
+          <div style="font-size:11px;color:var(--tx3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">📋 Backlog</div>
+          <div style="padding:8px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:6px;font-size:11px;color:var(--tx2);margin-bottom:5px">#12 Dark mode toggle</div>
+          <div style="padding:8px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:6px;font-size:11px;color:var(--tx2)">#15 Notification emails</div>
+        </div>
+        <div style="padding:12px;border-right:0.5px solid var(--bd)">
+          <div style="font-size:11px;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">🔧 In Progress</div>
+          <div style="padding:8px;background:var(--bg3);border:0.5px solid rgba(200,149,42,.2);border-radius:6px;font-size:11px;color:var(--tx2)">#42 Fix login bug</div>
+        </div>
+        <div style="padding:12px;border-right:0.5px solid var(--bd)">
+          <div style="font-size:11px;color:var(--pu);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">👀 In Review</div>
+          <div style="padding:8px;background:var(--bg3);border:0.5px solid var(--pu-b);border-radius:6px;font-size:11px;color:var(--tx2)">#38 PR: add auth</div>
+        </div>
+        <div style="padding:12px">
+          <div style="font-size:11px;color:var(--grn);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">✅ Done</div>
+          <div style="padding:8px;background:var(--grn-s);border:0.5px solid rgba(41,168,110,.2);border-radius:6px;font-size:11px;color:var(--grn)">#29 Setup CI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — set up issues and labels</div>
+    <div class="exc" id="e4-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e4-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Create issues, link them in commits, and auto-close</span>
+        <span class="ebadge easy">easy</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>In your my-journal GitHub repo, go to Issues → New Issue. Create one called "Add weekly summary section"</li>
+          <li class="si2"><span class="sn2">2</span>Label it "enhancement". Note its issue number (e.g. #3)</li>
+          <li class="si2"><span class="sn2">3</span>Create a branch: <code>git switch -c feature/weekly-summary</code></li>
+          <li class="si2"><span class="sn2">4</span>Add a <code>weekly.md</code> file. Commit with: <code>git commit -m "add weekly summary — closes #3"</code></li>
+          <li class="si2"><span class="sn2">5</span>Push and open a PR. Merge it. Go back to Issues — #3 should be automatically closed!</li>
+          <li class="si2"><span class="sn2">6</span>Bonus: go to Projects tab, create a new Project, and add 3 issues to it. Drag them through the board columns.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(4)">← Back</button>
+    <button class="btnp" onclick="nxt(4)">Next: GitHub CLI →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L5 — GitHub CLI
+══════════════════════════════════════ -->
+<section class="sec" id="s5">
+  <div class="hero">
+    <div class="ey">Lesson 06 of 06 · Phase 3 — GitHub & Remotes</div>
+    <h1>GitHub CLI — <i>gh</i></h1>
+    <p>The GitHub CLI (<code>gh</code>) lets you do everything GitHub offers — PRs, issues, releases, Actions — without leaving your terminal. It's the biggest developer productivity upgrade for GitHub power users.</p>
+    <div class="mr"><span class="mp pu">~30 min</span><span class="mp gr">productivity</span><span class="mp">2025 essential</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">install & authenticate</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">installing github CLI</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># macOS</span>
+<span class="p">$</span> <span class="k">brew install</span> gh
+
+<span class="c"># Windows</span>
+<span class="p">$</span> <span class="k">winget install</span> GitHub.cli
+
+<span class="c"># Linux (Ubuntu/Debian)</span>
+<span class="p">$</span> <span class="k">sudo apt install</span> gh
+
+<span class="c"># Authenticate (opens browser)</span>
+<span class="p">$</span> <span class="k">gh auth login</span>
+<span class="d">? What account do you want to log into? GitHub.com
+? How would you like to authenticate? Login with a web browser
+! First copy your one-time code: ABCD-1234
+- Press Enter to open github.com in your browser...</span>
+<span class="g">✓ Authentication complete. Logged in as yourusername</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">the most useful gh commands — 2025</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td>gh repo create</td><td>Create a new repo (local + GitHub in one step)</td></tr>
+      <tr><td>gh repo fork --clone</td><td>Fork a repo and clone it locally simultaneously</td></tr>
+      <tr><td>gh repo view --web</td><td>Open the current repo in your browser</td></tr>
+      <tr><td>gh pr create --fill</td><td>Open a PR using branch name + last commit as defaults</td></tr>
+      <tr><td>gh pr list</td><td>List open PRs for the current repo</td></tr>
+      <tr><td>gh pr checkout 42</td><td>Checkout a PR branch locally for review</td></tr>
+      <tr><td>gh pr merge --squash</td><td>Merge the current branch's PR (squash mode)</td></tr>
+      <tr><td>gh issue create</td><td>Create a new issue interactively</td></tr>
+      <tr><td>gh issue list --label bug</td><td>List issues filtered by label</td></tr>
+      <tr><td>gh run list</td><td>List recent GitHub Actions runs</td></tr>
+      <tr><td>gh run view --log</td><td>View logs of a workflow run</td></tr>
+      <tr><td>gh release create v1.0.0</td><td>Create a tagged release with notes</td></tr>
+      <tr><td>gh gist create file.txt</td><td>Create a GitHub Gist from a file</td></tr>
+      <tr><td>gh copilot suggest "..."</td><td>Get AI command suggestions (2025 feature)</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">powerful gh workflows</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">real-world gh CLI workflows</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># ── CREATE REPO FROM EXISTING LOCAL ─────────────────────</span>
+<span class="p">$</span> <span class="k">gh repo create</span> my-new-app <span class="s">--public --source=. --push</span>
+<span class="c"># Creates on GitHub + pushes in one command</span>
+
+<span class="c"># ── FULL PR WORKFLOW IN TERMINAL ─────────────────────────</span>
+<span class="p">$</span> <span class="k">git switch</span> <span class="s">-c</span> feature/dashboard
+<span class="p">$</span> <span class="c"># ...make changes, commit...</span>
+<span class="p">$</span> <span class="k">git push</span> <span class="s">-u</span> origin feature/dashboard
+<span class="p">$</span> <span class="k">gh pr create</span> <span class="s">--fill</span> <span class="s">--assignee</span> @me
+<span class="g">https://github.com/you/app/pull/47</span>
+
+<span class="c"># ── REVIEW SOMEONE'S PR LOCALLY ─────────────────────────</span>
+<span class="p">$</span> <span class="k">gh pr checkout</span> 47    <span class="c"># pulls their branch locally</span>
+<span class="p">$</span> <span class="c"># test it, run it...</span>
+<span class="p">$</span> <span class="k">gh pr review</span> 47 <span class="s">--approve</span> <span class="s">-b</span> <span class="t">"LGTM! Great work."</span>
+
+<span class="c"># ── WATCH CI LIVE ───────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">gh run watch</span>     <span class="c"># live tail of current workflow</span>
+<span class="p">$</span> <span class="k">gh run view</span> <span class="s">--log-failed</span>  <span class="c"># see only failed step logs</span>
+
+<span class="c"># ── CLONE ANY REPO (fast) ───────────────────────────────</span>
+<span class="p">$</span> <span class="k">gh repo clone</span> facebook/react  <span class="c"># no URL needed</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">🎉 phase 3 complete — what you mastered</div>
+    <div class="cgrid">
+      <div class="ctick">✓ SSH keys — password-free GitHub auth</div>
+      <div class="ctick">✓ push / pull / fetch — remote sync</div>
+      <div class="ctick">✓ Fork & PR — the open source workflow</div>
+      <div class="ctick">✓ Code review — giving & receiving feedback</div>
+      <div class="ctick">✓ Issues, Labels, Projects — project tracking</div>
+      <div class="ctick">✓ GitHub CLI (gh) — terminal superpowers</div>
+    </div>
+    <div class="note pu" style="margin-top:1rem"><i>🚀</i><div><b>Ready for Phase 4?</b> Next: GitHub Actions CI/CD — automate tests, linting, and deployment with every push. This is the skill that separates junior from mid-level engineers right now.</div></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(5)">← Back</button>
+    <button class="btnp" onclick="go(6)">Remote Diagram →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L6 — Remote Diagram
+══════════════════════════════════════ -->
+<section class="sec" id="s6">
+  <div class="hero">
+    <div class="ey">Tool — Visual</div>
+    <h1>Remote workflow <i>diagram</i></h1>
+    <p>Click any arrow to see exactly which Git command moves code in that direction — between your machine, your fork, and the upstream repo.</p>
+    <div class="mr"><span class="mp pu">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="rdgm">
+      <div class="rdgmh"><span>three-way remote topology</span><span style="font-size:11px;cursor:pointer;color:var(--pu)" onclick="resetDiag()">reset</span></div>
+      <div class="rdgmb" style="flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:center;gap:20px;width:100%;justify-content:center;flex-wrap:wrap">
+          <div class="rbox local" onclick="boxInfo('local')">
+            <div class="rbox-title">💻 Local Repo</div>
+            <div class="rbox-sub">your machine</div>
+            <div class="rbox-cmds">
+              <span class="rcmd up">git commit</span>
+              <span class="rcmd dn">git stash / restore</span>
+            </div>
+          </div>
+          <div class="rarrow">
+            <div style="display:flex;align-items:center;gap:4px;cursor:pointer" onclick="arrowInfo('push')">
+              <div class="rline"><div class="rline-body"></div></div>
+              <div class="rline-label">git push</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;cursor:pointer;margin-top:8px" onclick="arrowInfo('pull')">
+              <div class="rline-label">git pull/fetch</div>
+              <div class="rline rev"><div class="rline-body"></div></div>
+            </div>
+          </div>
+          <div class="rbox remote" onclick="boxInfo('origin')">
+            <div class="rbox-title">🐙 origin (your fork)</div>
+            <div class="rbox-sub">github.com/YOU/repo</div>
+            <div class="rbox-cmds">
+              <span class="rcmd up">git push origin</span>
+              <span class="rcmd dn">git fetch origin</span>
+            </div>
+          </div>
+          <div class="rarrow">
+            <div style="display:flex;align-items:center;gap:4px;cursor:pointer" onclick="arrowInfo('pr')">
+              <div class="rline"><div class="rline-body"></div></div>
+              <div class="rline-label">Pull Request</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;cursor:pointer;margin-top:8px" onclick="arrowInfo('upstream-pull')">
+              <div class="rline-label">git fetch upstream</div>
+              <div class="rline rev"><div class="rline-body"></div></div>
+            </div>
+          </div>
+          <div class="rbox remote" onclick="boxInfo('upstream')">
+            <div class="rbox-title">📦 upstream (original)</div>
+            <div class="rbox-sub">github.com/OWNER/repo</div>
+            <div class="rbox-cmds">
+              <span class="rcmd dn">read-only for you</span>
+            </div>
+          </div>
+        </div>
+        <div id="diaginfo" style="background:var(--bg3);border:0.5px solid var(--bd);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--tx2);min-height:44px;width:100%;max-width:700px;text-align:center">
+          Click any box or arrow to learn about that part of the remote workflow.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="prv(6)">← Lessons</button>
+    <button class="btnp" onclick="go(7)">PR Simulator →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L7 — PR Simulator
+══════════════════════════════════════ -->
+<section class="sec" id="s7">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Pull Request <i>simulator</i></h1>
+    <p>Experience the full PR lifecycle — open, review, comment, approve, and merge — without needing a second GitHub account.</p>
+    <div class="mr"><span class="mp pu">interactive</span><span class="mp">simulated GitHub UI</span></div>
+  </div>
+  <div class="cb">
+    <div class="prsim">
+      <div class="prsimh">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="prtitle">PR #47 — Add user authentication module</span>
+        </div>
+        <span class="prstate" id="prstate">Open</span>
+      </div>
+      <div class="prmeta">
+        <span class="prm"><span>yourusername</span> wants to merge <span>feature/auth</span> → <span>main</span></span>
+        <span class="prm">📁 <span>3 files changed</span></span>
+        <span class="prm">➕ <span>+124</span> ➖ <span>-8</span></span>
+        <span class="prm">💬 <span id="cmtcount">1 comment</span></span>
+      </div>
+      <div class="prdesc">
+        <strong>Description:</strong> Adds JWT-based authentication. Users can now register, login, and receive tokens. Closes #38.<br>
+        <br><strong>Tested on:</strong> Chrome 120, Safari 17, Firefox 121. All passing.
+      </div>
+      <div class="prdiff"><span class="g">+ import jwt from 'jsonwebtoken';</span>
+<span class="g">+ </span>
+<span class="g">+ export function generateToken(userId) {</span>
+<span class="g">+   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {</span>
+<span class="g">+     expiresIn: '7d'</span>
+<span class="g">+   });</span>
+<span class="g">+ }</span>
+<span class="g">+ </span>
+<span class="g">+ export function verifyToken(token) {</span>
+<span class="g">+   return jwt.verify(token, process.env.JWT_SECRET);</span>
+<span class="g">+ }</span></div>
+      <div class="prcomments" id="prcomments">
+        <div class="prcmt">
+          <div class="prcmt-avatar" style="background:var(--teal-s);color:var(--teal)">👤</div>
+          <div class="prcmt-body">
+            <div class="prcmt-header">reviewer-alice · 2 minutes ago</div>
+            <div class="prcmt-text suggestion">
+              💡 <strong>Suggestion:</strong> Consider adding a try/catch around <code>verifyToken</code> — <code>jwt.verify</code> throws on invalid tokens rather than returning null.
+            </div>
+          </div>
+        </div>
+        <div id="extracomments"></div>
+      </div>
+      <div class="practions">
+        <button class="praction secondary" onclick="prComment()">💬 Add comment</button>
+        <button class="praction secondary" onclick="prRequestChanges()">✏️ Request changes</button>
+        <button class="praction primary" onclick="prApprove()">✓ Approve</button>
+        <button class="praction danger" onclick="prClose()">✗ Close PR</button>
+        <button class="praction secondary" style="margin-left:auto;display:none" id="mergebtn" onclick="prMerge()">🔀 Merge PR</button>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(6)">← Diagram</button>
+    <button class="btnp" onclick="go(8)">CLI Sandbox →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L8 — CLI Sandbox
+══════════════════════════════════════ -->
+<section class="sec" id="s8">
+  <div class="hero">
+    <div class="ey">Tool — Practice</div>
+    <h1>GitHub CLI <i>sandbox</i></h1>
+    <p>Practice all Phase 3 commands in a simulated environment. Try git remote, push, fetch, pull, and gh commands.</p>
+    <div class="mr"><span class="mp pu">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="clisim">
+      <div class="clih">
+        <div style="display:flex;gap:5px"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div>
+        <span class="clititle">my-journal — remote sandbox</span>
+      </div>
+      <div class="cliout" id="cliout">
+        <div style="color:var(--tx3);font-size:12px;margin-bottom:8px"># Phase 3 CLI Sandbox — remotes, push, pull, gh</div>
+        <div style="color:var(--tx3);font-size:12px;margin-bottom:12px"># Type any command. Try: git remote -v, git push, gh pr list</div>
+        <div style="color:var(--tx3)">~/my-journal $ _</div>
+      </div>
+      <div class="clisug">
+        <span class="csug" onclick="runSug('git remote -v')">git remote -v</span>
+        <span class="csug" onclick="runSug('git push')">git push</span>
+        <span class="csug" onclick="runSug('git fetch origin')">git fetch origin</span>
+        <span class="csug" onclick="runSug('git pull --rebase')">git pull --rebase</span>
+        <span class="csug" onclick="runSug('gh pr list')">gh pr list</span>
+        <span class="csug" onclick="runSug('gh pr create --fill')">gh pr create --fill</span>
+        <span class="csug" onclick="runSug('gh issue list')">gh issue list</span>
+        <span class="csug" onclick="runSug('gh auth status')">gh auth status</span>
+      </div>
+      <div class="cliinrow">
+        <span class="cliprompt">~/my-journal $</span>
+        <input class="cliinput" id="cliinput" type="text" placeholder="type a command..." autocomplete="off" spellcheck="false" onkeydown="cliKey(event)">
+        <button class="clirun" onclick="cliRun()">run</button>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(7)">← PR Simulator</button>
+    <button class="btnp" onclick="go(9)">Quick Reference →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     L9 — Quick Reference
+══════════════════════════════════════ -->
+<section class="sec" id="s9">
+  <div class="hero">
+    <div class="ey">Tool — Reference</div>
+    <h1>Phase 3 quick <i>reference</i></h1>
+    <p>All GitHub and remote commands in one place. Bookmark this page.</p>
+  </div>
+
+  <div class="cb"><div class="ct">remote setup</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git remote add origin &lt;url&gt;</td><td>Link local repo to a remote</td></tr>
+      <tr><td>git remote -v</td><td>List all remotes (name + URL)</td></tr>
+      <tr><td>git remote rename old new</td><td>Rename a remote</td></tr>
+      <tr><td>git remote remove &lt;name&gt;</td><td>Remove a remote link</td></tr>
+      <tr><td>git remote add upstream &lt;url&gt;</td><td>Add original repo as upstream (for forks)</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ct">push & pull</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git push -u origin main</td><td>Push + set upstream tracking (first time)</td></tr>
+      <tr><td>git push</td><td>Push current branch to its upstream</td></tr>
+      <tr><td>git push origin --delete &lt;branch&gt;</td><td>Delete a remote branch</td></tr>
+      <tr><td>git push --force-with-lease</td><td>Force push safely (checks for remote changes)</td></tr>
+      <tr><td>git pull</td><td>Fetch + merge from upstream</td></tr>
+      <tr><td>git pull --rebase</td><td>Fetch + rebase (cleaner history)</td></tr>
+      <tr><td>git fetch origin</td><td>Download remote refs — don't merge yet</td></tr>
+      <tr><td>git fetch --prune</td><td>Fetch + remove deleted remote branch refs</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ct">github cli (gh)</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>gh auth login</td><td>Authenticate with GitHub</td></tr>
+      <tr><td>gh repo create</td><td>Create repo on GitHub (interactive)</td></tr>
+      <tr><td>gh repo clone owner/repo</td><td>Clone any public repo by name</td></tr>
+      <tr><td>gh repo fork --clone</td><td>Fork + clone in one step</td></tr>
+      <tr><td>gh pr create --fill</td><td>Create PR using auto-detected info</td></tr>
+      <tr><td>gh pr list</td><td>List open PRs for current repo</td></tr>
+      <tr><td>gh pr checkout &lt;number&gt;</td><td>Check out a PR branch locally</td></tr>
+      <tr><td>gh pr review --approve</td><td>Approve a PR</td></tr>
+      <tr><td>gh pr merge --squash</td><td>Merge PR (squash mode)</td></tr>
+      <tr><td>gh issue create</td><td>Create a new issue interactively</td></tr>
+      <tr><td>gh issue list --label bug</td><td>List issues filtered by label</td></tr>
+      <tr><td>gh run list</td><td>List recent Actions workflow runs</td></tr>
+      <tr><td>gh run watch</td><td>Live tail of running workflow</td></tr>
+      <tr><td>gh release create v1.0.0</td><td>Create a tagged release</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ct">ssh & auth</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>ssh-keygen -t ed25519 -C "email"</td><td>Generate modern SSH keypair</td></tr>
+      <tr><td>eval "$(ssh-agent -s)"</td><td>Start the SSH agent</td></tr>
+      <tr><td>ssh-add ~/.ssh/id_ed25519</td><td>Add key to SSH agent</td></tr>
+      <tr><td>ssh -T git@github.com</td><td>Test GitHub SSH connection</td></tr>
+      <tr><td>cat ~/.ssh/id_ed25519.pub</td><td>Print your public key (paste to GitHub)</td></tr>
+    </table></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="go(8)">← CLI Sandbox</button>
+    <button class="btnp" onclick="gophase4()">Phase 4: Actions & CI/CD ↗</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ── NAV ── */
+let cur=0; const total=6; const doneSet=new Set();
+function go(n){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));
+  document.getElementById('s'+n).classList.add('on');
+  document.getElementById('n'+n).classList.add('on');
+  cur=n; window.scrollTo({top:0,behavior:'smooth'});
+}
+function nxt(n){doneSet.add(n);document.getElementById('n'+n).classList.add('dn');upProg();go(n+1);}
+function prv(n){go(n-1);}
+function upProg(){
+  const p=Math.round((doneSet.size/total)*100);
+  document.getElementById('gp').style.width=p+'%';
+  document.getElementById('spf').style.width=p+'%';
+  document.getElementById('ptxt').textContent=doneSet.size+' / '+total;
+}
+function gophase4(){alert('Phase 4: GitHub Actions & CI/CD — open git-phase4-actions.html when ready!');}
+
+/* ── EXERCISE ── */
+function tog(h){const b=h.nextElementSibling;const o=b.classList.contains('open');b.classList.toggle('open',!o);h.setAttribute('aria-expanded',!o);}
+function mkdn(e,id){e.stopPropagation();document.getElementById(id).classList.toggle('dn');}
+
+/* ── COPY ── */
+function cp(btn){
+  const text=btn.closest('.code').querySelector('.codeb').innerText;
+  navigator.clipboard.writeText(text.replace(/^\$ /gm,'').trim()).then(()=>{
+    btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1600);
+  });
+}
+
+/* ── REMOTE DIAGRAM ── */
+const diagInfo={
+  local:'<strong>Local Repo</strong> — This is the .git folder on your machine. All your commits, branches, and history live here. It works 100% offline. Changes only leave your machine when you run git push.',
+  origin:'<strong>origin (your fork)</strong> — A remote named "origin" pointing to YOUR copy of the repo on GitHub. You have full write access. This is where you push your feature branches and open Pull Requests from.',
+  upstream:'<strong>upstream (original repo)</strong> — The original repo you forked from, owned by someone else. You can read (fetch) from it but cannot push. You keep your fork in sync by fetching upstream and merging/rebasing.',
+  push:'<strong>git push</strong> — Sends your local commits up to origin (your fork). Use <code>git push -u origin branch-name</code> the first time to set upstream tracking. After that, just <code>git push</code>.',
+  pull:'<strong>git pull / git fetch</strong> — Pulls changes FROM origin down to your local repo. <code>git fetch</code> is safe (download only). <code>git pull</code> downloads + merges. Use <code>git pull --rebase</code> for clean history.',
+  pr:'<strong>Pull Request</strong> — Not a Git command — it\'s a GitHub feature. You ask the upstream owner to review and merge your changes from your fork into their repo. The entire open-source world runs on this.',
+  'upstream-pull':'<strong>git fetch upstream</strong> — Downloads new commits from the original repo into your local <code>upstream/main</code> reference. Then <code>git merge upstream/main</code> or <code>git rebase upstream/main</code> to integrate them into your work.',
+};
+function boxInfo(k){document.getElementById('diaginfo').innerHTML=diagInfo[k]||'';}
+function arrowInfo(k){document.getElementById('diaginfo').innerHTML=diagInfo[k]||'';}
+function resetDiag(){document.getElementById('diaginfo').textContent='Click any box or arrow to learn about that part of the remote workflow.';}
+
+/* ── PR SIMULATOR ── */
+let prStatus='open'; let approved=false; let commentCount=1;
+function addPrComment(text,type='normal'){
+  commentCount++;
+  document.getElementById('cmtcount').textContent=commentCount+' comment'+(commentCount>1?'s':'');
+  const d=document.createElement('div');d.className='prcmt';
+  d.innerHTML=`<div class="prcmt-avatar" style="background:var(--pu-s);color:var(--pu)">🧑</div>
+    <div class="prcmt-body">
+      <div class="prcmt-header">you · just now</div>
+      <div class="prcmt-text${type==='suggestion'?' suggestion':''}">${text}</div>
+    </div>`;
+  document.getElementById('extracomments').appendChild(d);
+}
+function prComment(){
+  const msgs=['Looks good overall! The JWT expiry of 7 days seems reasonable.','Left a question about error handling in verifyToken.','Should we also add refresh token support in a follow-up PR?'];
+  addPrComment(msgs[Math.floor(Math.random()*msgs.length)]);
+}
+function prRequestChanges(){
+  if(prStatus!=='open')return;
+  document.getElementById('prstate').textContent='Changes requested';
+  document.getElementById('prstate').style.background='var(--gold-s)';
+  document.getElementById('prstate').style.color='var(--gold)';
+  document.getElementById('prstate').style.border='0.5px solid rgba(200,149,42,.2)';
+  addPrComment('✏️ Please add try/catch around jwt.verify — it throws on invalid tokens rather than returning falsy.','suggestion');
+  prStatus='changes-requested';
+}
+function prApprove(){
+  if(prStatus==='merged')return;
+  approved=true;
+  document.getElementById('prstate').textContent='✓ Approved';
+  document.getElementById('prstate').style.background='var(--grn-s)';
+  document.getElementById('prstate').style.color='var(--grn)';
+  document.getElementById('prstate').style.border='0.5px solid rgba(41,168,110,.2)';
+  document.getElementById('mergebtn').style.display='inline-flex';
+  prStatus='approved';
+  addPrComment('✓ Approved — LGTM! Clean implementation. Ready to merge.');
+}
+function prMerge(){
+  document.getElementById('prstate').textContent='Merged';
+  document.getElementById('prstate').style.background='var(--pu-s)';
+  document.getElementById('prstate').style.color='var(--pu)';
+  document.getElementById('prstate').style.border='0.5px solid var(--pu-b)';
+  document.getElementById('mergebtn').style.display='none';
+  prStatus='merged';
+  addPrComment('🔀 PR #47 merged into main. Branch feature/auth deleted. Issue #38 automatically closed.');
+}
+function prClose(){
+  document.getElementById('prstate').textContent='Closed';
+  document.getElementById('prstate').style.background='var(--red-s)';
+  document.getElementById('prstate').style.color='var(--red)';
+  document.getElementById('prstate').style.border='0.5px solid rgba(224,74,69,.2)';
+  prStatus='closed';
+}
+
+/* ── CLI SANDBOX ── */
+const cliState={branch:'main',remote:'git@github.com:you/my-journal.git',upstream:'git@github.com:original/my-journal.git',commits:[{h:'4f2a1b3',m:'update day 3 notes'},{h:'d8c3f91',m:'add day 2 entry'},{h:'a1b2c3d',m:'initial commit'}],pushed:true,history:[]};
+function cliAdd(html){const o=document.getElementById('cliout');const d=document.createElement('div');d.style.lineHeight='1.7';d.innerHTML=html;o.appendChild(d);o.scrollTop=o.scrollHeight;}
+function runSug(cmd){document.getElementById('cliinput').value=cmd;cliRun();}
+function cliKey(e){if(e.key==='Enter')cliRun();if(e.key==='ArrowUp'&&cliState.history.length)document.getElementById('cliinput').value=cliState.history[cliState.history.length-1];}
+function cliRun(){
+  const inp=document.getElementById('cliinput');
+  const raw=inp.value.trim();if(!raw)return;
+  cliState.history.push(raw);
+  cliAdd(`<span style="color:var(--pu)">~/my-journal $</span> <span style="color:var(--tx)">${raw}</span>`);
+  inp.value='';
+  const out=simCli(raw.replace(/\s+/g,' '));
+  if(out)cliAdd(`<span style="color:var(--tx2);white-space:pre">${out}</span>`);
+  cliAdd('');
+}
+function simCli(cmd){
+  const t=cmd.trim();
+  if(t==='git remote -v'||t==='git remote')return`<span style="color:var(--teal)">origin</span>    ${cliState.remote} (fetch)\n<span style="color:var(--teal)">origin</span>    ${cliState.remote} (push)\n<span style="color:var(--teal)">upstream</span>  ${cliState.upstream} (fetch)\n<span style="color:var(--teal)">upstream</span>  ${cliState.upstream} (push)`;
+  if(t==='git push'||t==='git push origin main'){cliState.pushed=true;return`<span style="color:var(--grn)">To ${cliState.remote}\n   a1b2c3d..4f2a1b3  main → main</span>`;}
+  if(t.startsWith('git push -u')||t.startsWith('git push --set-upstream'))return`<span style="color:var(--grn)">Branch 'main' set up to track remote branch 'main' from 'origin'.\nTo ${cliState.remote}\n * [new branch]  main → main</span>`;
+  if(t==='git fetch origin'||t==='git fetch')return`<span style="color:var(--tx2)">From github.com:you/my-journal\n   4f2a1b3..9c3e001  main → origin/main</span>`;
+  if(t==='git fetch --prune')return`<span style="color:var(--tx2)">From github.com:you/my-journal\n - [deleted]  origin/old-branch</span>`;
+  if(t==='git pull'||t==='git pull origin main')return`<span style="color:var(--grn)">Already up to date.</span>`;
+  if(t==='git pull --rebase')return`<span style="color:var(--grn)">Successfully rebased and updated refs/heads/main.</span>`;
+  if(t==='gh auth status')return`<span style="color:var(--grn)">✓ Logged in to github.com as yourusername (oauth_token)</span>`;
+  if(t==='gh pr list')return`<span style="color:var(--pu)">#47</span>  Add authentication module   <span style="color:var(--grn)">Open</span>   feature/auth\n<span style="color:var(--pu)">#44</span>  Fix typo in README           <span style="color:var(--grn)">Open</span>   fix/typo`;
+  if(t==='gh pr create --fill'||t==='gh pr create')return`<span style="color:var(--grn)">✓ Created pull request #48: Update day 4 notes\nhttps://github.com/you/my-journal/pull/48</span>`;
+  if(t==='gh issue list')return`<span style="color:var(--pu)">#5</span>   Add weekly summary section   <span style="color:var(--grn)">Open</span>\n<span style="color:var(--pu)">#3</span>   Dark mode support            <span style="color:var(--grn)">Open</span>`;
+  if(t.startsWith('gh issue create'))return`<span style="color:var(--grn)">✓ Created issue #6: https://github.com/you/my-journal/issues/6</span>`;
+  if(t==='gh run list')return`<span style="color:var(--grn)">✓</span>  CI — push   main  4f2a1b3  2m ago\n<span style="color:var(--grn)">✓</span>  CI — PR #47 feat  abc1234  10m ago`;
+  if(t==='gh run watch')return`<span style="color:var(--tx2)">Refreshing run status every 3 seconds. Press Ctrl+C to quit.\n</span><span style="color:var(--grn)">✓ CI passed in 1m 23s</span>`;
+  if(t.startsWith('gh repo create'))return`<span style="color:var(--grn)">✓ Created repository you/new-repo on GitHub\n✓ Pushed local commits</span>`;
+  if(t==='gh repo fork --clone'||t.startsWith('gh repo fork'))return`<span style="color:var(--grn)">✓ Created fork you/original-repo\n✓ Cloned fork locally</span>`;
+  if(t.startsWith('git push origin --delete'))return`<span style="color:var(--grn)">To ${cliState.remote}\n - [deleted]  feature/old-branch</span>`;
+  if(t.startsWith('git remote add'))return`<span style="color:var(--grn)">Remote added successfully.</span>`;
+  if(t==='git branch -vv')return`<span style="color:var(--grn)">* main</span>  4f2a1b3 <span style="color:var(--tx2)">[origin/main] update day 3 notes</span>`;
+  if(t==='ssh -T git@github.com')return`<span style="color:var(--grn)">Hi yourusername! You've successfully authenticated, but GitHub does not provide shell access.</span>`;
+  if(t==='help'||t==='gh help')return`<span style="color:var(--tx2)">Available: git remote, git push, git pull, git fetch, gh pr, gh issue, gh run, gh repo, gh auth, ssh -T git@github.com</span>`;
+  if(t==='clear')return null;
+  return`<span style="color:var(--red)">command not recognized. Type 'help' for available commands.</span>`;
+}
+</script>
+</body>
+</html>

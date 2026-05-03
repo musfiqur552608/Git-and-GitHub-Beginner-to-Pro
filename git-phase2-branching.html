@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Phase 2 — Branches & Merging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0e10;--bg2:#111316;--bg3:#181b1f;--bg4:#21252b;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#dde2e8;--text2:#8b939e;--text3:#4a5260;
+  --blue:#3b9eff;--blue-s:rgba(59,158,255,0.1);--blue-b:rgba(59,158,255,0.22);
+  --green:#2dba6e;--green-s:rgba(45,186,110,0.1);
+  --purple:#a97ef4;--purple-s:rgba(169,126,244,0.1);
+  --orange:#f07236;--orange-s:rgba(240,114,54,0.1);
+  --red:#e8504a;--red-s:rgba(232,80,74,0.1);
+  --yellow:#d9a842;--yellow-s:rgba(217,168,66,0.1);
+  --teal:#28c4b0;--teal-s:rgba(40,196,176,0.1);
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Fraunces',Georgia,serif;
+  --sw:270px;--hh:58px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── HEADER ── */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:var(--hh);background:rgba(12,14,16,0.94);
+  backdrop-filter:blur(16px);border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;padding:0 1.5rem;gap:1rem
+}
+.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.hlogo{
+  width:30px;height:30px;border-radius:7px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0
+}
+.hname{font-size:13px;font-weight:500;color:var(--text);letter-spacing:.02em}
+.hname span{color:var(--blue)}
+.hfill{flex:1}
+.htag{
+  font-size:10px;padding:3px 10px;border-radius:11px;
+  border:0.5px solid var(--border);color:var(--text3);background:var(--bg2)
+}
+.htag.hi{border-color:rgba(59,158,255,.25);color:var(--blue);background:var(--blue-s)}
+.hprog-wrap{position:fixed;top:var(--hh);left:0;right:0;z-index:199;height:2px;background:var(--border)}
+.hprog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));width:0%;transition:width .3s}
+
+/* ── LAYOUT ── */
+.layout{display:flex;padding-top:calc(var(--hh)+2px);min-height:100vh}
+
+/* ── SIDEBAR ── */
+aside{
+  width:var(--sw);flex-shrink:0;
+  position:fixed;top:calc(var(--hh)+2px);left:0;bottom:0;
+  overflow-y:auto;border-right:0.5px solid var(--border);
+  background:var(--bg);padding:1.5rem 0 3rem
+}
+.slabel{
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text3);padding:0 1.25rem;margin-bottom:5px;margin-top:4px
+}
+.sitem{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 12px;margin:0 8px;border-radius:8px;cursor:pointer;
+  text-decoration:none;color:var(--text2);font-size:12px;
+  border:none;background:transparent;width:calc(100% - 16px);text-align:left;
+  transition:background .13s,color .13s
+}
+.sitem:hover{background:var(--bg3);color:var(--text)}
+.sitem.active{background:var(--blue-s);color:var(--blue)}
+.sitem.done{color:var(--green)}
+.snum{
+  width:22px;height:22px;border-radius:5px;background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:500;color:var(--text3);flex-shrink:0;transition:all .13s
+}
+.sitem.active .snum{background:var(--blue-s);color:var(--blue)}
+.sitem.done .snum{background:var(--green-s);color:var(--green)}
+.sprogressbox{
+  margin:1.25rem 1rem 0;padding:12px 14px;
+  background:var(--bg3);border:0.5px solid var(--border);border-radius:10px
+}
+.sprow{font-size:10px;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:5px}
+.spbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.spfill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:2px;transition:width .4s;width:0%}
+
+/* ── MAIN ── */
+main{margin-left:var(--sw);flex:1;max-width:900px;padding:2.5rem 2.5rem 5rem}
+
+/* ── SECTIONS ── */
+.sec{display:none;animation:fadein .22s ease}
+.sec.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:16px;padding:2rem 2rem 1.75rem;
+  margin-bottom:2rem;position:relative;overflow:hidden
+}
+.hero::after{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(59,158,255,.07),transparent 70%);
+  pointer-events:none
+}
+.eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:.5rem}
+.hero h1{font-family:var(--serif);font-size:28px;font-weight:700;line-height:1.2;color:var(--text);margin-bottom:.7rem}
+.hero p{font-size:13px;color:var(--text2);line-height:1.75;max-width:560px}
+.metarow{display:flex;gap:10px;margin-top:1.1rem;flex-wrap:wrap}
+.mpill{font-size:11px;padding:3px 12px;border-radius:11px;border:0.5px solid var(--border);color:var(--text2)}
+.mpill.bl{border-color:rgba(59,158,255,.3);color:var(--blue);background:var(--blue-s)}
+.mpill.gr{border-color:rgba(45,186,110,.3);color:var(--green);background:var(--green-s)}
+
+/* ── CONTENT ── */
+.cb{margin-bottom:2rem}
+.ctitle{
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:.85rem;
+  display:flex;align-items:center;gap:8px
+}
+.ctitle::after{content:'';flex:1;height:.5px;background:var(--border)}
+.prose{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:.85rem}
+.prose strong{color:var(--text);font-weight:500}
+.prose code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:0.5px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--blue)}
+
+/* ── CODE BLOCK ── */
+.cb2{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.cb2h{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg3);border-bottom:0.5px solid var(--border)}
+.dots{display:flex;gap:5px}
+.dot{width:10px;height:10px;border-radius:50%}
+.fname{font-size:11px;color:var(--text3);margin-left:4px}
+.cpbtn{margin-left:auto;font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:4px;transition:all .13s;font-family:var(--mono)}
+.cpbtn:hover{background:var(--bg4);color:var(--text2)}
+.cb2b{padding:.9rem 1.2rem;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre}
+.p{color:var(--orange)} .k{color:var(--blue)} .s{color:var(--yellow)}
+.g{color:var(--green)} .r{color:var(--red)} .c{color:var(--text3);font-style:italic}
+.pu{color:var(--purple)} .t{color:var(--text)} .d{color:var(--text2)}
+
+/* ── CALLOUT ── */
+.note{padding:11px 15px;border-radius:8px;margin-bottom:.85rem;font-size:12px;line-height:1.7;display:flex;gap:10px;align-items:flex-start;border:0.5px solid}
+.note i{font-size:14px;flex-shrink:0;margin-top:1px;font-style:normal}
+.note b{color:var(--text);font-weight:500}
+.note.tip{background:var(--blue-s);border-color:rgba(59,158,255,.2);color:var(--text2)}
+.note.warn{background:var(--yellow-s);border-color:rgba(217,168,66,.2);color:var(--text2)}
+.note.ok{background:var(--green-s);border-color:rgba(45,186,110,.2);color:var(--text2)}
+.note.danger{background:var(--red-s);border-color:rgba(232,80,74,.2);color:var(--text2)}
+
+/* ── CMD TABLE ── */
+.ctbl{border:0.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.ctbl table{width:100%;border-collapse:collapse}
+.ctbl th{padding:7px 13px;text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-bottom:0.5px solid var(--border);font-weight:400}
+.ctbl td{padding:8px 13px;font-size:12px;border-bottom:0.5px solid var(--border);vertical-align:top}
+.ctbl tr:last-child td{border-bottom:none}
+.ctbl tr:hover td{background:var(--bg3)}
+.ctbl td:first-child{font-family:var(--mono);color:var(--blue);width:44%;white-space:nowrap}
+.ctbl td:last-child{color:var(--text2)}
+
+/* ── BRANCH VISUALIZER ── */
+.bviz{
+  border:0.5px solid var(--border);border-radius:12px;
+  overflow:hidden;margin-bottom:1.5rem
+}
+.bviz-header{
+  padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between
+}
+.bviz-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.bviz-controls{display:flex;gap:6px}
+.bviz-btn{
+  font-size:10px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);
+  border:0.5px solid var(--border);background:var(--bg4);color:var(--text2);transition:all .15s
+}
+.bviz-btn:hover{border-color:var(--border2);color:var(--text)}
+.bviz-btn.active{background:var(--blue-s);border-color:rgba(59,158,255,.3);color:var(--blue)}
+.bviz-canvas{
+  background:#090b0d;padding:1.5rem 1.25rem;
+  overflow-x:auto;min-height:160px
+}
+.bviz-info{
+  background:var(--bg2);padding:10px 16px;border-top:0.5px solid var(--border);
+  font-size:12px;color:var(--text2);min-height:38px
+}
+
+/* ── CONFLICT RESOLVER ── */
+.conflict-box{
+  border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem
+}
+.cf-header{
+  padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;gap:10px
+}
+.cf-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;flex:1}
+.cf-status{font-size:11px;padding:2px 10px;border-radius:10px;font-family:var(--mono)}
+.cf-editors{display:grid;grid-template-columns:1fr 1fr;background:var(--bg2)}
+.cf-pane{border-right:0.5px solid var(--border)}
+.cf-pane:last-child{border-right:none}
+.cf-pane-header{
+  padding:7px 14px;background:var(--bg3);border-bottom:0.5px solid var(--border);
+  font-size:10px;color:var(--text3);display:flex;align-items:center;gap:6px
+}
+.cf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cf-code{padding:.9rem 1.2rem;font-family:var(--mono);font-size:12px;line-height:1.8;min-height:120px;white-space:pre}
+.cf-conflict{background:rgba(232,80,74,.08);color:var(--red)}
+.cf-ok{background:rgba(45,186,110,.08);color:var(--green)}
+.cf-resolve{
+  padding:.85rem 1.2rem;background:#090b0d;border-top:0.5px solid var(--border)
+}
+.cf-resolve-label{font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em}
+.cf-options{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.cf-opt{
+  font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:var(--mono);
+  border:0.5px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s
+}
+.cf-opt:hover{border-color:var(--border2);color:var(--text)}
+.cf-opt.sel-ours{background:var(--blue-s);border-color:rgba(59,158,255,.3);color:var(--blue)}
+.cf-opt.sel-theirs{background:var(--purple-s);border-color:rgba(169,126,244,.3);color:var(--purple)}
+.cf-opt.sel-both{background:var(--green-s);border-color:rgba(45,186,110,.3);color:var(--green)}
+.cf-result{
+  background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;
+  padding:.75rem 1rem;font-family:var(--mono);font-size:12px;line-height:1.8;
+  min-height:60px;color:var(--text2);white-space:pre
+}
+
+/* ── EXERCISE ── */
+.excard{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:.85rem;transition:border-color .18s}
+.excard:hover{border-color:var(--border2)}
+.excard.done{border-color:rgba(45,186,110,.3)}
+.exh{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--bg2);border-bottom:0.5px solid var(--border);cursor:pointer}
+.exchk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;cursor:pointer}
+.exchk svg{width:12px;height:12px;stroke:white;stroke-width:2.5;fill:none;opacity:0;transition:opacity .18s}
+.excard.done .exchk{background:var(--green);border-color:var(--green)}
+.excard.done .exchk svg{opacity:1}
+.extitle{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.exbadge{font-size:10px;padding:2px 8px;border-radius:9px;border:0.5px solid}
+.easy{border-color:var(--green-s);color:var(--green);background:var(--green-s)}
+.med{border-color:var(--yellow-s);color:var(--yellow);background:var(--yellow-s)}
+.hard{border-color:var(--red-s);color:var(--red);background:var(--red-s)}
+.extog{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.extog svg{width:12px;height:12px;stroke:var(--text3);fill:none;transition:transform .18s}
+.exh[aria-expanded="true"] .extog svg{transform:rotate(180deg)}
+.exbody{padding:1rem 1.2rem;background:var(--bg2);display:none}
+.exbody.open{display:block}
+.steplist{list-style:none;display:flex;flex-direction:column;gap:7px}
+.stepitem{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--text2);line-height:1.5}
+.stepnum{width:20px;height:20px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--border);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;margin-top:1px}
+.hint{margin-top:.7rem;padding:9px 13px;background:var(--blue-s);border:0.5px solid rgba(59,158,255,.2);border-radius:7px;font-size:12px;color:var(--text2);line-height:1.6}
+.hint strong{color:var(--blue)}
+
+/* ── QUIZ ── */
+.qcard{border:0.5px solid var(--border);border-radius:10px;background:var(--bg2);padding:1.4rem;margin-bottom:.85rem}
+.qq{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.85rem}
+.qopts{display:flex;flex-direction:column;gap:5px}
+.qopt{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;border:0.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;color:var(--text2);background:var(--bg3);transition:all .13s;text-align:left;font-family:var(--mono);width:100%}
+.qopt:hover{border-color:var(--border2);color:var(--text)}
+.qopt.correct{border-color:rgba(45,186,110,.5);background:var(--green-s);color:var(--green)}
+.qopt.wrong{border-color:rgba(232,80,74,.5);background:var(--red-s);color:var(--red)}
+.qfb{margin-top:.65rem;padding:9px 13px;border-radius:7px;font-size:12px;color:var(--text2);display:none;border:0.5px solid}
+.qfb.show{display:block}
+.qfb.ok{background:var(--green-s);border-color:rgba(45,186,110,.2);color:var(--green)}
+.qfb.no{background:var(--red-s);border-color:rgba(232,80,74,.2);color:var(--red)}
+
+/* ── STASH SIMULATOR ── */
+.stash-sim{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
+.ss-header{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--border);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.ss-body{background:var(--bg2);padding:1rem}
+.ss-zones{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:start;margin-bottom:1rem}
+.ss-zone{border:0.5px solid var(--border);border-radius:8px;padding:.75rem;background:var(--bg3)}
+.ss-zone-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ss-items{display:flex;flex-direction:column;gap:5px;min-height:60px}
+.ss-item{padding:6px 10px;background:var(--bg4);border:0.5px solid var(--border);border-radius:5px;font-size:11px;color:var(--text2);cursor:grab}
+.ss-item.highlight{border-color:rgba(59,158,255,.4);color:var(--blue)}
+.ss-arrow{display:flex;flex-direction:column;gap:6px;padding-top:30px}
+.ss-arrbtn{font-size:10px;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:var(--mono);border:0.5px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .13s;white-space:nowrap}
+.ss-arrbtn:hover{border-color:var(--border2);color:var(--text)}
+.ss-log{background:#090b0d;border-top:0.5px solid var(--border);padding:.75rem 1rem;font-family:var(--mono);font-size:11.5px;line-height:1.7;color:var(--text3);min-height:60px}
+
+/* ── REBASE VS MERGE ── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.compare-card{border:0.5px solid var(--border);border-radius:10px;overflow:hidden}
+.compare-card-header{padding:10px 14px;font-size:12px;font-weight:500;border-bottom:0.5px solid var(--border)}
+.compare-card-header.blue{background:var(--blue-s);color:var(--blue)}
+.compare-card-header.purple{background:var(--purple-s);color:var(--purple)}
+.compare-card-body{padding:.85rem 1rem;background:var(--bg2)}
+.compare-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.compare-list li{font-size:12px;color:var(--text2);display:flex;gap:7px;line-height:1.4}
+.compare-list li::before{content:'→';color:var(--text3);flex-shrink:0}
+
+/* ── NAV ── */
+.lnav{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;padding-top:1.5rem;border-top:0.5px solid var(--border)}
+.btnprimary{padding:10px 22px;background:var(--blue);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all .13s;display:flex;align-items:center;gap:8px}
+.btnprimary:hover{filter:brightness(1.15);transform:translateX(2px)}
+.btnsecondary{padding:10px 18px;background:var(--bg3);color:var(--text2);border:0.5px solid var(--border);border-radius:7px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .13s}
+.btnsecondary:hover{background:var(--bg4);color:var(--text)}
+
+/* ── BRANCH TAG ── */
+.btag{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2px 9px;border-radius:5px;font-family:var(--mono);border:0.5px solid;margin:0 2px;vertical-align:middle}
+.btag.main{background:var(--orange-s);border-color:rgba(240,114,54,.3);color:var(--orange)}
+.btag.feat{background:var(--blue-s);border-color:rgba(59,158,255,.3);color:var(--blue)}
+.btag.head{background:var(--green-s);border-color:rgba(45,186,110,.3);color:var(--green)}
+.btag.any{background:var(--purple-s);border-color:rgba(169,126,244,.3);color:var(--purple)}
+
+@media(max-width:780px){
+  :root{--sw:0px}
+  aside{display:none}
+  main{margin-left:0;padding:1.5rem 1.25rem 3rem}
+  .cf-editors{grid-template-columns:1fr}
+  .compare-grid{grid-template-columns:1fr}
+  .ss-zones{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hbrand" href="#">
+    <div class="hlogo">🌿</div>
+    <span class="hname"><span>git</span> / phase-2</span>
+  </a>
+  <div class="hfill"></div>
+  <div class="htag hi">branching & merging</div>
+  <div class="htag">weeks 3–4</div>
+</header>
+<div class="hprog-wrap"><div class="hprog-fill" id="gp"></div></div>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<aside>
+  <div class="slabel">lessons</div>
+  <button class="sitem active" onclick="go(0)" id="n0"><span class="snum">1</span>What is a branch?</button>
+  <button class="sitem" onclick="go(1)" id="n1"><span class="snum">2</span>branch, switch, checkout</button>
+  <button class="sitem" onclick="go(2)" id="n2"><span class="snum">3</span>Merging — fast-forward</button>
+  <button class="sitem" onclick="go(3)" id="n3"><span class="snum">4</span>3-way merge & conflicts</button>
+  <button class="sitem" onclick="go(4)" id="n4"><span class="snum">5</span>git rebase</button>
+  <button class="sitem" onclick="go(5)" id="n5"><span class="snum">6</span>git stash</button>
+  <div class="slabel" style="margin-top:8px">tools</div>
+  <button class="sitem" onclick="go(6)" id="n6"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Branch visualizer</button>
+  <button class="sitem" onclick="go(7)" id="n7"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Conflict resolver</button>
+  <button class="sitem" onclick="go(8)" id="n8"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Quick reference</button>
+  <div class="sprogressbox">
+    <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
+    <div class="spbar"><div class="spfill" id="spf"></div></div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main>
+
+<!-- ════ L0: What is a branch ════ -->
+<section class="sec active" id="s0">
+  <div class="hero">
+    <div class="eyebrow">Lesson 01 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>What is a branch?</h1>
+    <p>A branch is Git's killer feature. It lets you work on new ideas in complete isolation — without touching the stable code. When you're ready, you bring the work back. The whole internet runs on this workflow.</p>
+    <div class="metarow">
+      <span class="mpill bl">~20 min</span>
+      <span class="mpill gr">concept</span>
+      <span class="mpill">most important in phase 2</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">the mental model</div>
+    <p class="prose">Think of your project history as a timeline of commits. A <strong>branch</strong> is just a movable pointer to one of those commits. When you commit on a branch, the pointer advances forward automatically.</p>
+    <p class="prose"><strong>HEAD</strong> is a special pointer that says "this is where you are right now." It points to your current branch, which in turn points to the latest commit on that branch.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">branch as a lightweight pointer</span></div>
+      <div class="cb2b"><span class="c">         c1 ──── c2 ──── c3  ← main (branch pointer)</span>
+                                   <span class="g">↑</span>
+                             <span class="g">HEAD (you are here)</span>
+
+<span class="c"> After creating feature/login branch:</span>
+
+         c1 ──── c2 ──── c3  ← <span class="k">main</span>
+                                   <span class="g">↑</span>
+                           <span class="k">feature/login</span>  ← <span class="g">HEAD</span>
+
+<span class="c"> After making 2 commits on the feature branch:</span>
+
+         c1 ──── c2 ──── c3  ← <span class="k">main</span>
+                           <span class="d">\</span>
+                            <span class="d">c4 ──── c5</span>  ← <span class="k">feature/login</span>  ← <span class="g">HEAD</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Key insight:</b> A branch is just a 41-byte file containing a commit hash. Creating a branch costs almost nothing — no copying, no duplication. That's why branches are cheap and you should use them constantly.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">why use branches — real scenarios</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem">
+      <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+        <div style="font-size:18px;margin-bottom:7px">🆕</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px">New Feature</div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.5">Work on login without breaking the working homepage</div>
+      </div>
+      <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+        <div style="font-size:18px;margin-bottom:7px">🐛</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px">Bug Fix</div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.5">Fix a production bug on its own branch — deploy it immediately</div>
+      </div>
+      <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px">
+        <div style="font-size:18px;margin-bottom:7px">🧪</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px">Experiment</div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.5">Try a risky refactor — if it breaks, just delete the branch</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">knowledge check</div>
+    <div class="qcard">
+      <div class="qq">What is a Git branch technically?</div>
+      <div class="qopts">
+        <button class="qopt" onclick="quiz(this,'wrong','q0a')">A. A full copy of all your files at a point in time</button>
+        <button class="qopt" onclick="quiz(this,'correct','q0a')">B. A lightweight movable pointer to a commit</button>
+        <button class="qopt" onclick="quiz(this,'wrong','q0a')">C. A backup saved on GitHub's servers</button>
+        <button class="qopt" onclick="quiz(this,'wrong','q0a')">D. A folder containing the latest version of your project</button>
+      </div>
+      <div class="qfb" id="q0a-fb"></div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <span style="font-size:12px;color:var(--text3)">lesson 1 of 6</span>
+    <button class="btnprimary" onclick="next(0)">Next: branch & switch →</button>
+  </div>
+</section>
+
+<!-- ════ L1: branch, switch, checkout ════ -->
+<section class="sec" id="s1">
+  <div class="hero">
+    <div class="eyebrow">Lesson 02 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>branch · switch · checkout</h1>
+    <p>These are the commands you'll use to create, navigate, and manage branches. Git 2.23+ introduced <code>switch</code> and <code>restore</code> to replace the overloaded <code>checkout</code> — use the modern syntax.</p>
+    <div class="metarow">
+      <span class="mpill bl">~35 min</span>
+      <span class="mpill gr">hands-on</span>
+      <span class="mpill">daily commands</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">creating & switching branches</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">all the ways to work with branches</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># ── LISTING BRANCHES ────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git branch</span>                 <span class="c"># local branches (* = current)</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-a</span>              <span class="c"># local + remote branches</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-v</span>              <span class="c"># branches + last commit message</span>
+
+<span class="c"># ── CREATING BRANCHES ────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git branch</span> feature/login    <span class="c"># create (but stay on current branch)</span>
+<span class="p">$</span> <span class="k">git switch</span> <span class="s">-c</span> feature/login  <span class="c"># create + switch in one step ✓ preferred</span>
+<span class="p">$</span> <span class="k">git checkout</span> <span class="s">-b</span> feature/login <span class="c"># older syntax — same result</span>
+
+<span class="c"># ── SWITCHING BRANCHES ───────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git switch</span> main              <span class="c"># switch to main</span>
+<span class="p">$</span> <span class="k">git switch</span> -                 <span class="c"># switch to PREVIOUS branch (very handy)</span>
+<span class="p">$</span> <span class="k">git checkout</span> main            <span class="c"># older syntax</span>
+
+<span class="c"># ── DELETING BRANCHES ────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-d</span> feature/login  <span class="c"># safe delete (only if merged)</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-D</span> feature/login  <span class="c"># force delete (even if unmerged)</span>
+
+<span class="c"># ── RENAMING A BRANCH ────────────────────────────────────</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-m</span> old-name new-name</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">naming conventions — industry standard</div>
+    <div class="ctbl"><table>
+      <tr><th>Pattern</th><th>Use case</th><th>Example</th></tr>
+      <tr><td>feature/&lt;desc&gt;</td><td>New feature work</td><td>feature/user-login</td></tr>
+      <tr><td>fix/&lt;desc&gt;</td><td>Bug fixes</td><td>fix/null-pointer-auth</td></tr>
+      <tr><td>hotfix/&lt;desc&gt;</td><td>Urgent production fix</td><td>hotfix/payment-crash</td></tr>
+      <tr><td>chore/&lt;desc&gt;</td><td>Maintenance, refactoring</td><td>chore/update-deps</td></tr>
+      <tr><td>docs/&lt;desc&gt;</td><td>Documentation only</td><td>docs/readme-update</td></tr>
+      <tr><td>release/&lt;version&gt;</td><td>Release preparation</td><td>release/v2.1.0</td></tr>
+    </table></div>
+    <div class="note tip"><i>💡</i><div><b>Use lowercase-with-hyphens:</b> No spaces, no uppercase. The slash creates visual grouping in tools like GitHub and GitKraken. Keep it short but descriptive.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">git switch vs git checkout — what changed in 2.23</div>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-card-header blue">git switch (new — 2019+)</div>
+        <div class="compare-card-body">
+          <ul class="compare-list">
+            <li>Only switches branches / creates branches</li>
+            <li>Clearer, unambiguous purpose</li>
+            <li><code>git switch -c &lt;branch&gt;</code> to create</li>
+            <li>Can't accidentally checkout files</li>
+            <li>Recommended for all new users</li>
+          </ul>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-header purple">git checkout (legacy)</div>
+        <div class="compare-card-body">
+          <ul class="compare-list">
+            <li>Does branches AND file restoration</li>
+            <li>Confusing dual purpose</li>
+            <li><code>git checkout -b &lt;branch&gt;</code> to create</li>
+            <li>Still works — won't be removed</li>
+            <li>You'll see it everywhere in old docs/Stack Overflow</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="note ok"><i>✓</i><div><b>Recommendation:</b> Use <code>git switch</code> going forward. It's clearer and less error-prone. When you see <code>git checkout</code> in tutorials, mentally translate it to <code>git switch</code>.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">exercise — create your first feature branch</div>
+    <div class="excard" id="e1-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="exchk" onclick="done(event,'e1-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="extitle">Create and work on a feature branch</span>
+        <span class="exbadge easy">easy</span>
+        <span class="extog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exbody open">
+        <ul class="steplist">
+          <li class="stepitem"><span class="stepnum">1</span>In your <code>my-journal</code> repo: <code>git switch -c feature/weather-log</code></li>
+          <li class="stepitem"><span class="stepnum">2</span>Create a file: <code>echo "# Weather Log" &gt; weather.md</code> then commit it</li>
+          <li class="stepitem"><span class="stepnum">3</span>Run <code>git log --oneline --all</code> — notice your branch is ahead of main</li>
+          <li class="stepitem"><span class="stepnum">4</span>Switch back to main: <code>git switch main</code> — notice <code>weather.md</code> disappears from your folder!</li>
+          <li class="stepitem"><span class="stepnum">5</span>Switch back to the feature branch: <code>git switch -</code> — it comes back. This is the magic.</li>
+          <li class="stepitem"><span class="stepnum">6</span>Run <code>git branch -v</code> to see all branches and their latest commit</li>
+        </ul>
+        <div class="hint"><strong>Why does the file disappear?</strong> Git updates your working directory to match the branch you switch to. Your files are safe — they're stored as commits on the feature branch.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(1)">← Back</button>
+    <button class="btnprimary" onclick="next(1)">Next: Merging (fast-forward) →</button>
+  </div>
+</section>
+
+<!-- ════ L2: Fast-forward merge ════ -->
+<section class="sec" id="s2">
+  <div class="hero">
+    <div class="eyebrow">Lesson 03 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>Merging — the fast-forward</h1>
+    <p>Merging brings the work from one branch into another. The simplest kind — a fast-forward merge — happens when there's a straight line of commits. No conflicts, no new merge commit.</p>
+    <div class="metarow">
+      <span class="mpill bl">~30 min</span>
+      <span class="mpill gr">core concept</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">fast-forward merge — when it happens</div>
+    <p class="prose">A fast-forward merge occurs when the target branch (usually <span class="btag main">main</span>) has not moved since you branched off. Git can simply move the pointer forward — no new merge commit needed.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">fast-forward merge — before & after</span></div>
+      <div class="cb2b"><span class="c">─── BEFORE MERGE ────────────────────────────────────</span>
+
+c1 ──── c2 ──── c3              ← <span class="k">main</span>
+                   \
+                    c4 ──── c5  ← <span class="k">feature/login</span>  ← <span class="g">HEAD</span>
+
+<span class="c">─── AFTER: git switch main && git merge feature/login ──</span>
+
+c1 ──── c2 ──── c3 ──── c4 ──── c5  ← <span class="k">main</span>  ← <span class="g">HEAD</span>
+                                         <span class="g">↑</span>
+                               <span class="k">feature/login</span>
+
+<span class="c"># Output you see:</span>
+<span class="g">Updating c3..c5
+Fast-forward
+ login.html | 47 +++++++++++++++++++
+ 1 file changed, 47 insertions(+)</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">merge with --no-ff — preserving history</div>
+    <p class="prose">In teams, it's common to use <code>--no-ff</code> (no fast-forward) to <strong>always create a merge commit</strong>. This preserves the fact that a feature branch existed — your history shows the branch structure clearly.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">--no-ff merge — creates merge commit</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># Switch to destination branch first</span>
+<span class="p">$</span> <span class="k">git switch</span> main
+
+<span class="c"># Regular fast-forward merge (default)</span>
+<span class="p">$</span> <span class="k">git merge</span> feature/login
+<span class="g">Fast-forward</span>
+
+<span class="c"># Merge with explicit merge commit (team standard)</span>
+<span class="p">$</span> <span class="k">git merge</span> <span class="s">--no-ff</span> feature/login <span class="s">-m</span> <span class="t">"merge: add user login feature"</span>
+<span class="d">Merge made by the 'ort' strategy.
+ login.html | 47 ++++++
+ auth.js    | 23 ++++</span>
+
+<span class="c"># Result with --no-ff:</span>
+<span class="d">c1 ─── c2 ─── c3 ───────────────── M6  ← </span><span class="k">main</span>
+                  \               /
+                   c4 ─── c5 ──/   ← <span class="k">feature/login</span> (merged)</div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>GitHub does this automatically</b> when you merge a Pull Request — it always creates a merge commit (or optionally squashes). This is why PRs are preserved in your history.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">the complete branch + merge workflow</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">feature branch full lifecycle</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># 1. Start from a clean main branch</span>
+<span class="p">$</span> <span class="k">git switch</span> main
+<span class="p">$</span> <span class="k">git pull</span>                          <span class="c"># make sure you're up to date</span>
+
+<span class="c"># 2. Create your feature branch</span>
+<span class="p">$</span> <span class="k">git switch</span> <span class="s">-c</span> feature/login
+
+<span class="c"># 3. Do your work (any number of commits)</span>
+<span class="p">$</span> <span class="k">git add</span> login.html auth.js
+<span class="p">$</span> <span class="k">git commit</span> <span class="s">-m</span> <span class="t">"add login form HTML"</span>
+<span class="p">$</span> <span class="k">git commit</span> <span class="s">-m</span> <span class="t">"add JWT auth logic"</span>
+
+<span class="c"># 4. Switch back and merge</span>
+<span class="p">$</span> <span class="k">git switch</span> main
+<span class="p">$</span> <span class="k">git merge</span> <span class="s">--no-ff</span> feature/login <span class="s">-m</span> <span class="t">"merge: user login feature"</span>
+
+<span class="c"># 5. Clean up (delete the branch — it's already merged)</span>
+<span class="p">$</span> <span class="k">git branch</span> <span class="s">-d</span> feature/login
+<span class="g">Deleted branch feature/login (was abc1234).</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">exercise — merge your first branch</div>
+    <div class="excard" id="e2-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="exchk" onclick="done(event,'e2-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="extitle">Create a feature branch, add commits, merge back to main</span>
+        <span class="exbadge easy">easy</span>
+        <span class="extog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exbody open">
+        <ul class="steplist">
+          <li class="stepitem"><span class="stepnum">1</span>From main: <code>git switch -c feature/mood-tracker</code></li>
+          <li class="stepitem"><span class="stepnum">2</span>Create <code>mood.md</code>, add 2 entries, make 2 commits (one per entry)</li>
+          <li class="stepitem"><span class="stepnum">3</span>Run <code>git log --oneline --all --graph</code> — see the branch diverge</li>
+          <li class="stepitem"><span class="stepnum">4</span>Switch to main: <code>git switch main</code></li>
+          <li class="stepitem"><span class="stepnum">5</span>Merge with no-ff: <code>git merge --no-ff feature/mood-tracker -m "merge: add mood tracker"</code></li>
+          <li class="stepitem"><span class="stepnum">6</span>Run <code>git log --oneline --graph</code> — see the merge commit shape</li>
+          <li class="stepitem"><span class="stepnum">7</span>Delete the branch: <code>git branch -d feature/mood-tracker</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(2)">← Back</button>
+    <button class="btnprimary" onclick="next(2)">Next: 3-way merge & conflicts →</button>
+  </div>
+</section>
+
+<!-- ════ L3: 3-way merge & conflicts ════ -->
+<section class="sec" id="s3">
+  <div class="hero">
+    <div class="eyebrow">Lesson 04 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>3-way merge &amp; conflict resolution</h1>
+    <p>Merge conflicts are not failures — they're Git asking for your judgment when two branches changed the same part of a file. Every developer resolves them daily. Once you know the pattern, they're easy.</p>
+    <div class="metarow">
+      <span class="mpill bl">~45 min</span>
+      <span class="mpill" style="border-color:rgba(240,114,54,.3);color:var(--orange)">critical skill</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">when does a 3-way merge happen?</div>
+    <p class="prose">A 3-way merge happens when both branches have diverged — each has commits the other doesn't. Git finds a common ancestor commit and merges the three versions: ancestor, yours, theirs.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">diverged history → 3-way merge</span></div>
+      <div class="cb2b"><span class="c">Both branches diverged (both have commits the other lacks):</span>
+
+         c1 ──── c2 ──── c3  ← <span class="k">main</span>  (added homepage.html)
+                    \
+                     c4 ──── c5  ← <span class="k">feature/login</span>  (added auth.js)
+
+<span class="c">3 reference points for the merge algorithm:</span>
+  <span class="d">[1] Common ancestor</span>: c2
+  <span class="d">[2] "Ours" (main)</span>:    c3
+  <span class="d">[3] "Theirs" (feature)</span>: c5
+
+<span class="c">Result — a new merge commit:</span>
+         c1 ── c2 ── c3 ──────── M6  ← <span class="k">main</span>
+                  \            /
+                   c4 ── c5 ─/</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">merge conflict — what it looks like</div>
+    <p class="prose">When Git can't automatically merge a file (both branches changed the same lines), it inserts <strong>conflict markers</strong> into the file and pauses, waiting for you to decide.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">app.js — conflict markers explained</span></div>
+      <div class="cb2b"><span class="d">function greet(user) {</span>
+<span class="r">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>                   <span class="c">← start of YOUR version (current branch)</span>
+<span class="r">  return `Hello, ${user.name}`;</span>  <span class="c">← your code</span>
+<span class="d">=======</span>                           <span class="c">← separator</span>
+<span class="g">  return `Hi there, ${user.name}! 👋`;</span>  <span class="c">← incoming branch code</span>
+<span class="r">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/friendlier-ui</span>  <span class="c">← end of THEIR version (incoming)</span>
+<span class="d">}</span></div>
+    </div>
+    <div class="note warn"><i>⚠</i><div><b>Don't panic!</b> Git hasn't broken your code. It's just showing you both versions and asking: "Which one do you want, or do you want something different?" You edit the file to remove the markers and keep what you want.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">resolving conflicts — step by step</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">conflict resolution workflow</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># 1. A merge conflict occurs</span>
+<span class="p">$</span> <span class="k">git merge</span> feature/friendlier-ui
+<span class="r">CONFLICT (content): Merge conflict in app.js
+Automatic merge failed; fix conflicts and then commit.</span>
+
+<span class="c"># 2. Check which files conflict</span>
+<span class="p">$</span> <span class="k">git status</span>
+<span class="r">    both modified:   app.js</span>
+
+<span class="c"># 3. Open the file(s) and edit manually
+#    OR use VS Code's merge editor:
+#    VS Code will highlight each conflict with Accept Incoming /
+#    Accept Current / Accept Both buttons.</span>
+
+<span class="c"># 4. After editing — remove ALL conflict markers &lt;&lt;&lt; === &gt;&gt;&gt;
+#    Then stage the resolved file</span>
+<span class="p">$</span> <span class="k">git add</span> app.js
+
+<span class="c"># 5. Commit the merge (Git pre-fills the message)</span>
+<span class="p">$</span> <span class="k">git commit</span>
+
+<span class="c"># ── ABORT if you made it worse ──────────────────────────</span>
+<span class="p">$</span> <span class="k">git merge</span> <span class="s">--abort</span>    <span class="c"># go back to before the merge started</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">interactive conflict resolver — practice</div>
+    <div class="conflict-box">
+      <div class="cf-header">
+        <span class="cf-title">conflict in app.js — line 12</span>
+        <span class="cf-status" id="cfstatus" style="background:var(--red-s);border:0.5px solid rgba(232,80,74,.2);color:var(--red)">● CONFLICT</span>
+      </div>
+      <div class="cf-editors">
+        <div class="cf-pane">
+          <div class="cf-pane-header"><div class="cf-dot" style="background:var(--blue)"></div>HEAD — main branch (yours)</div>
+          <div class="cf-code"><span class="r">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+  return `Hello, ${user.name}`;
+<span class="d">=======</span></div>
+        </div>
+        <div class="cf-pane">
+          <div class="cf-pane-header"><div class="cf-dot" style="background:var(--purple)"></div>Incoming — feature/friendlier-ui</div>
+          <div class="cf-code"><span class="d">=======</span>
+  return `Hi there, ${user.name}! 👋`;
+<span class="g">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/friendlier-ui</span></div>
+        </div>
+      </div>
+      <div class="cf-resolve">
+        <div class="cf-resolve-label">choose your resolution strategy:</div>
+        <div class="cf-options">
+          <button class="cf-opt" id="cf-ours" onclick="resolve('ours')">Keep ours (HEAD)</button>
+          <button class="cf-opt" id="cf-theirs" onclick="resolve('theirs')">Keep theirs (incoming)</button>
+          <button class="cf-opt" id="cf-both" onclick="resolve('both')">Keep both</button>
+          <button class="cf-opt" onclick="resolve('reset')" style="margin-left:auto">↺ reset</button>
+        </div>
+        <div class="cf-resolve-label">resolved file preview:</div>
+        <div class="cf-result" id="cfresult"><span style="color:var(--text3)"># choose a resolution above to preview the result</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">exercise — intentionally create and fix a conflict</div>
+    <div class="excard" id="e3-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="exchk" onclick="done(event,'e3-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="extitle">Create a real merge conflict, then resolve it</span>
+        <span class="exbadge med">medium</span>
+        <span class="extog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exbody open">
+        <ul class="steplist">
+          <li class="stepitem"><span class="stepnum">1</span>On main: edit <code>README.md</code> line 1 to say "Version 1.0" — commit it</li>
+          <li class="stepitem"><span class="stepnum">2</span>Create a new branch: <code>git switch -c conflict-demo</code></li>
+          <li class="stepitem"><span class="stepnum">3</span>Edit <code>README.md</code> line 1 (same line!) to say "Version 2.0" — commit it</li>
+          <li class="stepitem"><span class="stepnum">4</span>Switch to main: <code>git switch main</code></li>
+          <li class="stepitem"><span class="stepnum">5</span>Merge: <code>git merge conflict-demo</code> — you should see CONFLICT!</li>
+          <li class="stepitem"><span class="stepnum">6</span>Open README.md — find the conflict markers. Edit the file to say "Version 1.5 (merged)"</li>
+          <li class="stepitem"><span class="stepnum">7</span>Remove all <code>&lt;&lt;&lt;</code>, <code>===</code>, <code>&gt;&gt;&gt;</code> lines. Stage and commit.</li>
+        </ul>
+        <div class="hint"><strong>Pro tip:</strong> VS Code has a built-in merge editor. When you open a conflicted file, you'll see "Accept Current Change / Accept Incoming Change / Accept Both Changes" buttons above each conflict — click them instead of editing manually.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(3)">← Back</button>
+    <button class="btnprimary" onclick="next(3)">Next: git rebase →</button>
+  </div>
+</section>
+
+<!-- ════ L4: rebase ════ -->
+<section class="sec" id="s4">
+  <div class="hero">
+    <div class="eyebrow">Lesson 05 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>git rebase — a cleaner history</h1>
+    <p>Rebase re-applies your commits on top of another branch, giving you a clean linear history. It's one of Git's most powerful — and most misunderstood — features.</p>
+    <div class="metarow">
+      <span class="mpill bl">~40 min</span>
+      <span class="mpill" style="border-color:rgba(217,168,66,.3);color:var(--yellow)">intermediate</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">merge vs rebase — the visual difference</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">merge vs rebase — same result, different history</span></div>
+      <div class="cb2b"><span class="c">─── STARTING POINT (both have same starting point) ───────</span>
+
+c1 ── c2 ── c3          ← <span class="k">main</span>
+         \
+          c4 ── c5      ← <span class="k">feature/login</span>  ← <span class="g">HEAD</span>
+
+<span class="c">─── AFTER git merge main ──────────────────────────────────</span>
+c1 ── c2 ── c3 ───────── M6  ← <span class="k">main</span>  (merge commit)
+         \             /
+          c4 ── c5 ──           <span class="c">↑ preserves diverge history</span>
+
+<span class="c">─── AFTER git rebase main ─────────────────────────────────</span>
+c1 ── c2 ── c3 ── c4' ── c5'  ← <span class="k">feature/login</span>
+                               <span class="c">↑ c4 & c5 are replayed on top of c3</span>
+                               <span class="c">  they get NEW commit hashes (c4', c5')</span>
+                               <span class="c">  but same content changes</span></div>
+    </div>
+    <div class="compare-grid" style="margin-bottom:1rem">
+      <div class="compare-card">
+        <div class="compare-card-header blue">git merge</div>
+        <div class="compare-card-body"><ul class="compare-list">
+          <li>Creates a merge commit (M6)</li>
+          <li>Preserves exact history of what happened</li>
+          <li>Safe to use on shared/public branches</li>
+          <li>History can look messy with many features</li>
+          <li>Best for: main branch, shared branches</li>
+        </ul></div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-header purple">git rebase</div>
+        <div class="compare-card-body"><ul class="compare-list">
+          <li>No merge commit — linear history</li>
+          <li>Rewrites commit hashes (creates new commits)</li>
+          <li><strong>Never rebase shared/public branches</strong></li>
+          <li>Clean, easy-to-read history</li>
+          <li>Best for: local feature branches before PR</li>
+        </ul></div>
+      </div>
+    </div>
+    <div class="note danger"><i>🚫</i><div><b>The golden rule of rebase:</b> Never rebase commits that exist outside your local repo (i.e., pushed to a shared branch). Rebase rewrites history — if others have already pulled those commits, you'll create chaos for the whole team.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">interactive rebase — rewriting your own history</div>
+    <p class="prose"><code>git rebase -i</code> (interactive) is one of the most powerful things in Git. It lets you squash commits together, reorder them, edit messages, or delete commits entirely — all before sharing your work.</p>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">interactive rebase — clean up before PR</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># You have 4 messy commits you want to clean up</span>
+<span class="p">$</span> <span class="k">git log</span> <span class="s">--oneline</span>
+<span class="d">a7b1234 fix typo
+9c3f891 oops forgot a file
+4d2e567 WIP changes  
+1a8b234 add login feature</span>
+
+<span class="c"># Open interactive rebase for last 4 commits</span>
+<span class="p">$</span> <span class="k">git rebase</span> <span class="s">-i</span> HEAD~4
+
+<span class="c"># Editor opens — change 'pick' to an action word:</span>
+<span class="d">pick  1a8b234  add login feature</span>
+<span class="g">squash 4d2e567  WIP changes        </span><span class="c">← squash into previous</span>
+<span class="g">squash 9c3f891  oops forgot a file </span><span class="c">← squash into previous</span>
+<span class="g">reword a7b1234  fix typo           </span><span class="c">← just edit the message</span>
+
+<span class="c"># After save, Git asks for the combined commit message
+# Result: 4 messy commits → 1 clean commit</span>
+<span class="g">Successfully rebased and updated refs/heads/feature/login.</span></div>
+    </div>
+    <div class="ctbl" style="margin-top:.75rem"><table>
+      <tr><th>Command</th><th>What it does in interactive rebase</th></tr>
+      <tr><td>pick (p)</td><td>Keep this commit as-is</td></tr>
+      <tr><td>reword (r)</td><td>Keep commit, but edit its message</td></tr>
+      <tr><td>squash (s)</td><td>Merge into previous commit, combine messages</td></tr>
+      <tr><td>fixup (f)</td><td>Merge into previous commit, discard this message</td></tr>
+      <tr><td>drop (d)</td><td>Delete this commit entirely</td></tr>
+      <tr><td>edit (e)</td><td>Pause here to amend the commit</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">exercise — rebase a feature branch</div>
+    <div class="excard" id="e4-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="exchk" onclick="done(event,'e4-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="extitle">Rebase a feature branch onto updated main</span>
+        <span class="exbadge med">medium</span>
+        <span class="extog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exbody open">
+        <ul class="steplist">
+          <li class="stepitem"><span class="stepnum">1</span>On main, make a new commit (simulate teammate activity): add a line to README, commit it</li>
+          <li class="stepitem"><span class="stepnum">2</span>Create feature branch: <code>git switch -c feature/rebase-test</code></li>
+          <li class="stepitem"><span class="stepnum">3</span>Make 3 commits on this branch with messages like "wip 1", "wip 2", "done"</li>
+          <li class="stepitem"><span class="stepnum">4</span>Now rebase onto main: <code>git rebase main</code> — your 3 commits replay on top</li>
+          <li class="stepitem"><span class="stepnum">5</span>Run <code>git log --oneline --graph</code> — see the clean linear history</li>
+          <li class="stepitem"><span class="stepnum">6</span>Now try interactive squash: <code>git rebase -i HEAD~3</code>. Change 2nd and 3rd to <code>squash</code>. Save — write a clean combined message.</li>
+        </ul>
+        <div class="hint"><strong>Tip:</strong> If rebase gets confusing, <code>git rebase --abort</code> always gets you back to where you started. No damage done.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(4)">← Back</button>
+    <button class="btnprimary" onclick="next(4)">Next: git stash →</button>
+  </div>
+</section>
+
+<!-- ════ L5: stash ════ -->
+<section class="sec" id="s5">
+  <div class="hero">
+    <div class="eyebrow">Lesson 06 of 06 · Phase 2 — Branching & Merging</div>
+    <h1>git stash — save work temporarily</h1>
+    <p>You're halfway through a feature when your manager says "urgent bug fix needed on main NOW." Stash saves your unfinished work to a stack so you can switch contexts immediately — and come back later.</p>
+    <div class="metarow">
+      <span class="mpill bl">~25 min</span>
+      <span class="mpill gr">daily use</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">stash commands</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">git stash — all you need to know</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># Save uncommitted work to the stash (with a description)</span>
+<span class="p">$</span> <span class="k">git stash push</span> <span class="s">-m</span> <span class="t">"WIP: half-done login form"</span>
+<span class="g">Saved working directory and index state On feature/login: WIP: half-done login form</span>
+
+<span class="c"># List all stashed items</span>
+<span class="p">$</span> <span class="k">git stash list</span>
+<span class="d">stash@{0}: On feature/login: WIP: half-done login form
+stash@{1}: On main: quick experiment</span>
+
+<span class="c"># Apply latest stash (and keep it in the stash list)</span>
+<span class="p">$</span> <span class="k">git stash apply</span>
+
+<span class="c"># Apply latest stash AND remove it from list</span>
+<span class="p">$</span> <span class="k">git stash pop</span>
+
+<span class="c"># Apply a specific stash</span>
+<span class="p">$</span> <span class="k">git stash apply</span> stash@{1}
+
+<span class="c"># Delete a specific stash</span>
+<span class="p">$</span> <span class="k">git stash drop</span> stash@{0}
+
+<span class="c"># Also stash untracked files</span>
+<span class="p">$</span> <span class="k">git stash push</span> <span class="s">-u</span> <span class="s">-m</span> <span class="t">"include new files too"</span>
+
+<span class="c"># Create a new branch from a stash (very useful)</span>
+<span class="p">$</span> <span class="k">git stash branch</span> feature/recovered-work stash@{0}</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">interactive stash simulator</div>
+    <div class="stash-sim">
+      <div class="ss-header">stash workflow simulator</div>
+      <div class="ss-body">
+        <div class="ss-zones">
+          <div class="ss-zone">
+            <div class="ss-zone-title">📁 working directory</div>
+            <div class="ss-items" id="wd-items">
+              <div class="ss-item highlight">auth.js (modified)</div>
+              <div class="ss-item highlight">login.html (new)</div>
+            </div>
+          </div>
+          <div class="ss-arrow">
+            <button class="ss-arrbtn" onclick="stashPush()">stash push →</button>
+            <button class="ss-arrbtn" onclick="stashPop()">← stash pop</button>
+          </div>
+          <div class="ss-zone">
+            <div class="ss-zone-title">📦 stash stack</div>
+            <div class="ss-items" id="stash-items">
+              <div style="font-size:11px;color:var(--text3)">(empty)</div>
+            </div>
+          </div>
+        </div>
+        <div class="ss-log" id="ss-log"># Stash simulator — press buttons above to interact</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">the classic stash scenario</div>
+    <div class="cb2">
+      <div class="cb2h"><div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c940"></div></div><span class="fname">real-world stash workflow</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <div class="cb2b"><span class="c"># You're working on feature/login — not ready to commit yet</span>
+<span class="p">$</span> <span class="k">git status</span>
+<span class="r">modified: auth.js, login.html</span>
+
+<span class="c"># Boss: "urgent bug in production! fix ASAP"</span>
+<span class="p">$</span> <span class="k">git stash push</span> <span class="s">-m</span> <span class="t">"WIP: login form - need to add validation"</span>
+
+<span class="c"># Working directory is now clean — safe to switch branches</span>
+<span class="p">$</span> <span class="k">git switch</span> main
+<span class="p">$</span> <span class="k">git switch</span> <span class="s">-c</span> hotfix/payment-null-crash
+<span class="c"># ... fix the bug, commit, merge ...</span>
+
+<span class="c"># Back to your feature work</span>
+<span class="p">$</span> <span class="k">git switch</span> feature/login
+<span class="p">$</span> <span class="k">git stash pop</span>                 <span class="c"># your work comes back</span>
+<span class="g">On branch feature/login
+Changes not staged for commit:
+    modified: auth.js, login.html</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">🎉 phase 2 complete — what you mastered</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ Branch mental model (pointer to a commit)</div>
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ switch, branch, checkout commands</div>
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ Fast-forward & 3-way merges</div>
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ Conflict resolution — step by step</div>
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ git rebase + interactive rebase (-i)</div>
+      <div style="padding:9px 13px;background:var(--green-s);border:0.5px solid rgba(45,186,110,.2);border-radius:7px;font-size:12px;color:var(--green)">✓ git stash — work safely across contexts</div>
+    </div>
+    <div class="note ok" style="margin-top:1rem"><i>🚀</i><div><b>Ready for Phase 3?</b> Next up: GitHub, remotes, push/pull, pull requests, and team workflows. You'll take everything you know locally and connect it to the world.</div></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(5)">← Back</button>
+    <button class="btnprimary" onclick="go(6)">Branch Visualizer →</button>
+  </div>
+</section>
+
+<!-- ════ L6: Branch Visualizer ════ -->
+<section class="sec" id="s6">
+  <div class="hero">
+    <div class="eyebrow">Tool — Interactive</div>
+    <h1>Branch visualizer</h1>
+    <p>Watch branch operations play out visually. Click a scenario to see exactly what happens to the commit graph.</p>
+    <div class="metarow"><span class="mpill bl">interactive</span><span class="mpill">animated</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="bviz">
+      <div class="bviz-header">
+        <span class="bviz-title">commit graph</span>
+        <div class="bviz-controls">
+          <button class="bviz-btn active" id="vbtn0" onclick="showViz(0)">init</button>
+          <button class="bviz-btn" id="vbtn1" onclick="showViz(1)">create branch</button>
+          <button class="bviz-btn" id="vbtn2" onclick="showViz(2)">2 commits</button>
+          <button class="bviz-btn" id="vbtn3" onclick="showViz(3)">merge</button>
+          <button class="bviz-btn" id="vbtn4" onclick="showViz(4)">rebase</button>
+        </div>
+      </div>
+      <div class="bviz-canvas">
+        <svg id="vizsvg" width="700" height="130" viewBox="0 0 700 130" style="max-width:100%"></svg>
+      </div>
+      <div class="bviz-info" id="vizinfo">Click a button above to step through a branch scenario.</div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="prev(6)">← Lessons</button>
+    <button class="btnprimary" onclick="go(7)">Conflict Resolver →</button>
+  </div>
+</section>
+
+<!-- ════ L7: Conflict resolver ════ -->
+<section class="sec" id="s7">
+  <div class="hero">
+    <div class="eyebrow">Tool — Practice</div>
+    <h1>Multi-conflict resolver practice</h1>
+    <p>Work through multiple conflict scenarios. Practice choosing the right resolution for each situation.</p>
+    <div class="metarow"><span class="mpill bl">interactive</span><span class="mpill">practice</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">conflict scenario 1 — function return value</div>
+    <div class="conflict-box">
+      <div class="cf-header"><span class="cf-title">utils.js — formatGreeting()</span><span class="cf-status" id="s7cf1" style="background:var(--red-s);border:0.5px solid rgba(232,80,74,.2);color:var(--red)">● CONFLICT</span></div>
+      <div class="cf-editors">
+        <div class="cf-pane"><div class="cf-pane-header"><div class="cf-dot" style="background:var(--blue)"></div>main branch</div><div class="cf-code" style="color:var(--text2)">function formatGreeting(name) {
+<span class="r">  return "Hello, " + name;</span>
+}</div></div>
+        <div class="cf-pane"><div class="cf-pane-header"><div class="cf-dot" style="background:var(--purple)"></div>feature/i18n</div><div class="cf-code" style="color:var(--text2)">function formatGreeting(name, lang) {
+<span class="g">  return translations[lang](name);</span>
+}</div></div>
+      </div>
+      <div class="cf-resolve">
+        <div class="cf-resolve-label">your resolution:</div>
+        <div class="cf-options">
+          <button class="cf-opt" id="s7c1a" onclick="s7resolve(1,'a')">Keep main (simpler)</button>
+          <button class="cf-opt" id="s7c1b" onclick="s7resolve(1,'b')">Keep feature (i18n support)</button>
+          <button class="cf-opt" id="s7c1c" onclick="s7resolve(1,'c')">Keep both as fallback</button>
+        </div>
+        <div class="cf-result" id="s7r1"><span style="color:var(--text3)"># choose resolution above</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ctitle">conflict scenario 2 — config values</div>
+    <div class="conflict-box">
+      <div class="cf-header"><span class="cf-title">config.js — API timeout</span><span class="cf-status" id="s7cf2" style="background:var(--red-s);border:0.5px solid rgba(232,80,74,.2);color:var(--red)">● CONFLICT</span></div>
+      <div class="cf-editors">
+        <div class="cf-pane"><div class="cf-pane-header"><div class="cf-dot" style="background:var(--blue)"></div>main branch</div><div class="cf-code" style="color:var(--text2)">const config = {
+  apiUrl: "https://api.prod.com",
+<span class="r">  timeout: 3000,</span>
+};</div></div>
+        <div class="cf-pane"><div class="cf-pane-header"><div class="cf-dot" style="background:var(--purple)"></div>feature/perf</div><div class="cf-code" style="color:var(--text2)">const config = {
+  apiUrl: "https://api.prod.com",
+<span class="g">  timeout: 8000,</span>
+};</div></div>
+      </div>
+      <div class="cf-resolve">
+        <div class="cf-resolve-label">your resolution:</div>
+        <div class="cf-options">
+          <button class="cf-opt" id="s7c2a" onclick="s7resolve(2,'a')">Keep 3000ms (main)</button>
+          <button class="cf-opt" id="s7c2b" onclick="s7resolve(2,'b')">Keep 8000ms (feature)</button>
+          <button class="cf-opt" id="s7c2c" onclick="s7resolve(2,'c')">Choose 5000ms (compromise)</button>
+        </div>
+        <div class="cf-result" id="s7r2"><span style="color:var(--text3)"># choose resolution above</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="go(6)">← Visualizer</button>
+    <button class="btnprimary" onclick="go(8)">Quick Reference →</button>
+  </div>
+</section>
+
+<!-- ════ L8: Reference ════ -->
+<section class="sec" id="s8">
+  <div class="hero">
+    <div class="eyebrow">Tool — Reference</div>
+    <h1>Phase 2 quick reference</h1>
+    <p>All branching and merging commands in one scrollable page.</p>
+  </div>
+
+  <div class="cb"><div class="ctitle">branches</div>
+    <div class="ctbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git branch</td><td>List all local branches (* = current)</td></tr>
+      <tr><td>git branch -a</td><td>List local + remote tracking branches</td></tr>
+      <tr><td>git branch &lt;name&gt;</td><td>Create branch (stay on current branch)</td></tr>
+      <tr><td>git switch -c &lt;name&gt;</td><td>Create and switch to new branch</td></tr>
+      <tr><td>git switch &lt;name&gt;</td><td>Switch to existing branch</td></tr>
+      <tr><td>git switch -</td><td>Switch to previous branch</td></tr>
+      <tr><td>git branch -d &lt;name&gt;</td><td>Delete branch (safe — only merged)</td></tr>
+      <tr><td>git branch -D &lt;name&gt;</td><td>Force delete (even if unmerged)</td></tr>
+      <tr><td>git branch -m &lt;old&gt; &lt;new&gt;</td><td>Rename a branch</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ctitle">merging</div>
+    <div class="ctbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git merge &lt;branch&gt;</td><td>Merge branch into current (fast-forward if possible)</td></tr>
+      <tr><td>git merge --no-ff &lt;branch&gt;</td><td>Force merge commit even if fast-forward possible</td></tr>
+      <tr><td>git merge --squash &lt;branch&gt;</td><td>Combine all commits into one staged change</td></tr>
+      <tr><td>git merge --abort</td><td>Abort in-progress merge (undo to pre-merge state)</td></tr>
+      <tr><td>git mergetool</td><td>Open configured visual merge tool</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ctitle">rebasing</div>
+    <div class="ctbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git rebase &lt;branch&gt;</td><td>Replay current branch commits on top of branch</td></tr>
+      <tr><td>git rebase -i HEAD~N</td><td>Interactive rebase of last N commits</td></tr>
+      <tr><td>git rebase --continue</td><td>Continue after resolving rebase conflict</td></tr>
+      <tr><td>git rebase --abort</td><td>Abort rebase — return to pre-rebase state</td></tr>
+      <tr><td>git rebase --skip</td><td>Skip the current conflicting commit</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ctitle">stash</div>
+    <div class="ctbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git stash push -m "msg"</td><td>Save working dir + staging to stash stack</td></tr>
+      <tr><td>git stash list</td><td>Show all stashed items</td></tr>
+      <tr><td>git stash pop</td><td>Apply latest stash + remove from list</td></tr>
+      <tr><td>git stash apply stash@{N}</td><td>Apply specific stash (keep in list)</td></tr>
+      <tr><td>git stash drop stash@{N}</td><td>Delete a specific stash</td></tr>
+      <tr><td>git stash push -u</td><td>Also stash untracked files</td></tr>
+      <tr><td>git stash branch &lt;name&gt;</td><td>Create branch from stash</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ctitle">cherry-pick (bonus)</div>
+    <div class="ctbl"><table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>git cherry-pick &lt;hash&gt;</td><td>Apply one specific commit to current branch</td></tr>
+      <tr><td>git cherry-pick A..B</td><td>Apply range of commits (A exclusive, B inclusive)</td></tr>
+      <tr><td>git cherry-pick --no-commit &lt;hash&gt;</td><td>Apply changes without committing (inspect first)</td></tr>
+    </table></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btnsecondary" onclick="go(7)">← Conflict Resolver</button>
+    <button class="btnprimary" onclick="goPhase3()">Phase 3: GitHub & Remotes ↗</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ── NAV ── */
+let cur = 0;
+const total = 6;
+const done_ = new Set();
+
+function go(n) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sitem').forEach(b => b.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.getElementById('n' + n).classList.add('active');
+  cur = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (n === 6) setTimeout(initViz, 100);
+}
+function next(n) {
+  done_.add(n);
+  document.getElementById('n' + n).classList.add('done');
+  updateProg();
+  go(n + 1);
+}
+function prev(n) { go(n - 1); }
+function updateProg() {
+  const pct = Math.round((done_.size / total) * 100);
+  document.getElementById('gp').style.width = pct + '%';
+  document.getElementById('spf').style.width = pct + '%';
+  document.getElementById('ptxt').textContent = done_.size + ' / ' + total;
+}
+function goPhase3() { alert('Phase 3: GitHub & Remotes coming next! Open git-phase3-github.html when ready.'); }
+
+/* ── EXERCISE ── */
+function tog(header) {
+  const body = header.nextElementSibling;
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  header.setAttribute('aria-expanded', !open);
+}
+function done(e, id) {
+  e.stopPropagation();
+  document.getElementById(id).classList.toggle('done');
+}
+
+/* ── QUIZ ── */
+function quiz(btn, result, qid) {
+  btn.closest('.qopts').querySelectorAll('.qopt').forEach(b => b.disabled = true);
+  btn.classList.add(result);
+  const fb = document.getElementById(qid + '-fb');
+  fb.classList.add('show');
+  if (result === 'correct') {
+    fb.classList.add('ok');
+    fb.textContent = '✓ Correct! ' + qfb(qid, 'ok');
+  } else {
+    fb.classList.add('no');
+    fb.textContent = '✗ Not quite. ' + qfb(qid, 'no');
+    btn.closest('.qopts').querySelectorAll('.qopt').forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'correct'")) b.classList.add('correct');
+    });
+  }
+}
+function qfb(id, t) {
+  const m = {
+    q0a: { ok: 'A branch is just a file containing a 40-char hash — it weighs almost nothing. This is why branching in Git is nearly instant.', no: 'Unlike SVN or older VCS, Git branches are not copies. They\'re just lightweight pointers.' },
+  };
+  return m[id] ? m[id][t] : '';
+}
+
+/* ── CONFLICT RESOLVER (lesson 3) ── */
+function resolve(choice) {
+  const r = document.getElementById('cfresult');
+  const s = document.getElementById('cfstatus');
+  const btns = ['cf-ours','cf-theirs','cf-both'].map(id => document.getElementById(id));
+  btns.forEach(b => b.className = 'cf-opt');
+  if (choice === 'reset') {
+    r.textContent = '# choose a resolution above to preview the result';
+    r.style.color = 'var(--text3)';
+    s.textContent = '● CONFLICT'; s.style.background = 'var(--red-s)'; s.style.color = 'var(--red)';
+    s.style.border = '0.5px solid rgba(232,80,74,.2)';
+    return;
+  }
+  s.textContent = '✓ RESOLVED'; s.style.background = 'var(--green-s)'; s.style.color = 'var(--green)';
+  s.style.border = '0.5px solid rgba(45,186,110,.2)';
+  if (choice === 'ours') {
+    document.getElementById('cf-ours').className = 'cf-opt sel-ours';
+    r.style.color = 'var(--blue)';
+    r.textContent = 'function greet(user) {\n  return `Hello, ${user.name}`;\n}';
+  } else if (choice === 'theirs') {
+    document.getElementById('cf-theirs').className = 'cf-opt sel-theirs';
+    r.style.color = 'var(--purple)';
+    r.textContent = 'function greet(user) {\n  return `Hi there, ${user.name}! 👋`;\n}';
+  } else {
+    document.getElementById('cf-both').className = 'cf-opt sel-both';
+    r.style.color = 'var(--green)';
+    r.textContent = 'function greet(user) {\n  return `Hello, ${user.name}`;     // keep original\n  // return `Hi there, ${user.name}! 👋`;  // friendlier version — consider later\n}';
+  }
+}
+
+/* ── STASH SIMULATOR ── */
+let stashStack = [];
+let wdItems = [{ label: 'auth.js (modified)', hi: true }, { label: 'login.html (new)', hi: true }];
+function renderStash() {
+  const wd = document.getElementById('wd-items');
+  const st = document.getElementById('stash-items');
+  wd.innerHTML = wdItems.length
+    ? wdItems.map(i => `<div class="ss-item${i.hi?' highlight':''}">${i.label}</div>`).join('')
+    : '<div style="font-size:11px;color:var(--green)">✓ clean working directory</div>';
+  st.innerHTML = stashStack.length
+    ? stashStack.map((s,i) => `<div class="ss-item highlight">stash@{${i}}: ${s}</div>`).join('')
+    : '<div style="font-size:11px;color:var(--text3)">(empty)</div>';
+}
+function stashLog(msg) {
+  const l = document.getElementById('ss-log');
+  l.textContent += '\n$ ' + msg;
+  l.scrollTop = l.scrollHeight;
+}
+function stashPush() {
+  if (!wdItems.length) { stashLog('nothing to stash'); return; }
+  const label = 'On feature/login: WIP changes (' + wdItems.map(i=>i.label).join(', ') + ')';
+  stashStack.unshift(label);
+  const old = [...wdItems];
+  wdItems = [];
+  stashLog('git stash push -m "WIP changes"');
+  stashLog('Saved working directory → stash@{0}');
+  renderStash();
+}
+function stashPop() {
+  if (!stashStack.length) { stashLog('error: No stash entries found'); return; }
+  const item = stashStack.shift();
+  wdItems = [{ label: 'auth.js (modified)', hi: true }, { label: 'login.html (new)', hi: true }];
+  stashLog('git stash pop');
+  stashLog('Applied stash@{0} → working directory restored');
+  renderStash();
+}
+
+/* ── SCENARIO CONFLICT RESOLVER (lesson 7) ── */
+function s7resolve(num, choice) {
+  const resolutions = {
+    1: {
+      a: 'function formatGreeting(name) {\n  return "Hello, " + name;\n}',
+      b: 'function formatGreeting(name, lang = "en") {\n  return translations[lang](name);\n}',
+      c: 'function formatGreeting(name, lang = null) {\n  if (lang && translations[lang]) return translations[lang](name);\n  return "Hello, " + name; // fallback\n}',
+    },
+    2: {
+      a: 'const config = {\n  apiUrl: "https://api.prod.com",\n  timeout: 3000,\n};',
+      b: 'const config = {\n  apiUrl: "https://api.prod.com",\n  timeout: 8000,\n};',
+      c: 'const config = {\n  apiUrl: "https://api.prod.com",\n  timeout: 5000, // compromise between 3000 and 8000\n};',
+    },
+  };
+  const colors = { a: 'var(--blue)', b: 'var(--purple)', c: 'var(--green)' };
+  const labels = { a: `s7c${num}a`, b: `s7c${num}b`, c: `s7c${num}c` };
+  ['a','b','c'].forEach(o => {
+    const el = document.getElementById(`s7c${num}${o}`);
+    if (el) el.className = 'cf-opt';
+  });
+  const btn = document.getElementById(labels[choice]);
+  if (btn) btn.className = `cf-opt ${choice==='a'?'sel-ours':choice==='b'?'sel-theirs':'sel-both'}`;
+  const r = document.getElementById(`s7r${num}`);
+  r.style.color = colors[choice];
+  r.textContent = resolutions[num][choice];
+  const st = document.getElementById(`s7cf${num}`);
+  st.textContent = '✓ RESOLVED'; st.style.background = 'var(--green-s)'; st.style.color = 'var(--green)';
+  st.style.border = '0.5px solid rgba(45,186,110,.2)';
+}
+
+/* ── COPY ── */
+function cp(btn) {
+  const text = btn.closest('.cb2').querySelector('.cb2b').innerText;
+  navigator.clipboard.writeText(text.replace(/^\$ /gm,'').trim()).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1600);
+  });
+}
+
+/* ── BRANCH VISUALIZER ── */
+const VIZ = [
+  {
+    label: 'initial state',
+    info: '3 commits on main. HEAD points to main, which points to c3.',
+    draw(svg) {
+      // commits
+      commit(svg, 100, 65, '#4a5260', 'c1', '');
+      commit(svg, 220, 65, '#4a5260', 'c2', '');
+      commit(svg, 340, 65, '#f07236', 'c3', '');
+      line(svg, 115, 65, 205, 65);
+      line(svg, 235, 65, 325, 65);
+      label(svg, 340, 32, 'main', '#f07236');
+      label(svg, 340, 18, 'HEAD', '#2dba6e');
+      arrow(svg, 340, 36, 340, 52);
+    }
+  },
+  {
+    label: 'create branch',
+    info: 'git switch -c feature/login — a new pointer is created at c3. Both main and feature/login point to the same commit. HEAD now points to feature/login.',
+    draw(svg) {
+      commit(svg, 100, 65, '#4a5260', 'c1', '');
+      commit(svg, 220, 65, '#4a5260', 'c2', '');
+      commit(svg, 340, 65, '#3b9eff', 'c3', '');
+      line(svg, 115, 65, 205, 65);
+      line(svg, 235, 65, 325, 65);
+      label(svg, 280, 100, 'main', '#f07236');
+      label(svg, 400, 100, 'feature/login', '#3b9eff');
+      label(svg, 400, 116, 'HEAD', '#2dba6e');
+      arrow(svg, 280, 96, 335, 75);
+      arrow(svg, 400, 96, 355, 75);
+    }
+  },
+  {
+    label: '2 commits on branch',
+    info: 'After 2 commits on feature/login, the branch pointer has moved to c5. main still points to c3 — untouched.',
+    draw(svg) {
+      commit(svg, 80, 65, '#4a5260', 'c1', '');
+      commit(svg, 190, 65, '#4a5260', 'c2', '');
+      commit(svg, 300, 65, '#4a5260', 'c3', '');
+      commit(svg, 410, 100, '#3b9eff', 'c4', '');
+      commit(svg, 520, 100, '#3b9eff', 'c5', '');
+      line(svg, 95, 65, 175, 65);
+      line(svg, 205, 65, 285, 65);
+      line(svg, 315, 70, 395, 95);
+      line(svg, 425, 100, 505, 100);
+      label(svg, 300, 32, 'main', '#f07236');
+      label(svg, 520, 70, 'feature/login', '#3b9eff');
+      label(svg, 520, 58, 'HEAD', '#2dba6e');
+      arrow(svg, 300, 36, 300, 52);
+      arrow(svg, 520, 70, 520, 85);
+    }
+  },
+  {
+    label: 'after merge',
+    info: 'git merge --no-ff feature/login — a merge commit M6 is created. main advances to M6. feature/login still exists (until deleted).',
+    draw(svg) {
+      commit(svg, 60, 55, '#4a5260', 'c1', '');
+      commit(svg, 160, 55, '#4a5260', 'c2', '');
+      commit(svg, 260, 55, '#4a5260', 'c3', '');
+      commit(svg, 360, 95, '#3b9eff', 'c4', '');
+      commit(svg, 450, 95, '#3b9eff', 'c5', '');
+      commit(svg, 560, 55, '#2dba6e', 'M6', '');
+      line(svg, 75, 55, 145, 55);
+      line(svg, 175, 55, 245, 55);
+      line(svg, 275, 60, 345, 90);
+      line(svg, 375, 95, 435, 95);
+      line(svg, 465, 90, 544, 62);
+      line(svg, 275, 55, 544, 55);
+      label(svg, 560, 22, 'main', '#f07236');
+      label(svg, 560, 10, 'HEAD', '#2dba6e');
+      label(svg, 420, 116, 'feature/login', '#3b9eff');
+      arrow(svg, 560, 26, 560, 42);
+      arrow(svg, 420, 112, 450, 100);
+    }
+  },
+  {
+    label: 'after rebase',
+    info: 'git rebase main — c4 and c5 are replayed as c4\' and c5\' on top of main. Linear history, no merge commit.',
+    draw(svg) {
+      commit(svg, 60, 65, '#4a5260', 'c1', '');
+      commit(svg, 160, 65, '#4a5260', 'c2', '');
+      commit(svg, 260, 65, '#4a5260', 'c3', '');
+      commit(svg, 380, 65, '#a97ef4', "c4'", '');
+      commit(svg, 500, 65, '#a97ef4', "c5'", '');
+      line(svg, 75, 65, 145, 65);
+      line(svg, 175, 65, 245, 65);
+      line(svg, 275, 65, 363, 65);
+      line(svg, 397, 65, 483, 65);
+      label(svg, 260, 32, 'main', '#f07236');
+      label(svg, 500, 32, 'feature/login', '#a97ef4');
+      label(svg, 500, 18, 'HEAD', '#2dba6e');
+      arrow(svg, 260, 36, 260, 52);
+      arrow(svg, 500, 36, 500, 52);
+    }
+  }
+];
+
+function commit(svg, x, y, color, text, sub) {
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 14);
+  c.setAttribute('fill', '#0c0e10'); c.setAttribute('stroke', color); c.setAttribute('stroke-width', '2');
+  svg.appendChild(c);
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y + 4);
+  t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-family', "'JetBrains Mono',monospace");
+  t.setAttribute('font-size', '9'); t.setAttribute('fill', color);
+  t.textContent = text; svg.appendChild(t);
+}
+function line(svg, x1, y1, x2, y2) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  l.setAttribute('stroke', '#21252b'); l.setAttribute('stroke-width', '1.5');
+  svg.insertBefore(l, svg.firstChild);
+}
+function label(svg, x, y, text, color) {
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  const tw = text.length * 6.5 + 12;
+  bg.setAttribute('x', x - tw/2); bg.setAttribute('y', y - 9);
+  bg.setAttribute('width', tw); bg.setAttribute('height', 14);
+  bg.setAttribute('rx', 4); bg.setAttribute('fill', color + '22');
+  svg.appendChild(bg);
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y + 1);
+  t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-family', "'JetBrains Mono',monospace");
+  t.setAttribute('font-size', '9'); t.setAttribute('fill', color);
+  t.textContent = text; svg.appendChild(t);
+}
+function arrow(svg, x1, y1, x2, y2) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  l.setAttribute('stroke', '#4a5260'); l.setAttribute('stroke-width', '1');
+  l.setAttribute('stroke-dasharray', '3,2');
+  svg.appendChild(l);
+}
+function initViz() { showViz(0); }
+function showViz(n) {
+  document.querySelectorAll('[id^="vbtn"]').forEach((b,i) => b.classList.toggle('active', i===n));
+  const svg = document.getElementById('vizsvg');
+  if (!svg) return;
+  svg.innerHTML = '';
+  VIZ[n].draw(svg);
+  document.getElementById('vizinfo').textContent = VIZ[n].info;
+}
+
+/* ── INIT ── */
+renderStash();
+</script>
+</body>
+</html>
