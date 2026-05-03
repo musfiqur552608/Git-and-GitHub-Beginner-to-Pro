@@ -187,7 +187,8 @@ aside {
 main {
   margin-left: var(--sidebar-w);
   flex: 1;
-  max-width: 860px;
+  width: calc(100% - var(--sidebar-w));
+  max-width: none;
   padding: 2.5rem 2.5rem 4rem;
 }
 
@@ -913,6 +914,7 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text3);
+  margin-top: 0;
 }
 .nav-item, .sitem, .si { color: var(--text2); border-radius: 8px; }
 .nav-item:hover, .sitem:hover, .si:hover { background: var(--bg3); color: var(--text); }

@@ -60,7 +60,7 @@ aside{
   width:var(--sw);flex-shrink:0;
   position:fixed;top:calc(var(--hh)+2px);left:0;bottom:0;
   overflow-y:auto;border-right:0.5px solid var(--bd);background:var(--bg);
-  padding:1.25rem 0 3rem
+  padding:1.5rem 0 2rem
 }
 .sg{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);padding:0 1.25rem;margin-bottom:4px;margin-top:6px}
 .si{
@@ -81,7 +81,7 @@ aside{
 .spfill{height:100%;background:linear-gradient(90deg,var(--pu),var(--pink));border-radius:2px;transition:width .4s;width:0%}
 
 /* ── MAIN ── */
-main{margin-left:var(--sw);flex:1;max-width:920px;padding:2.5rem 2.5rem 5rem}
+main{margin-left:var(--sw);flex:1;width:calc(100% - var(--sw));max-width:none;padding:2.5rem 2.5rem 5rem}
 .sec{display:none;animation:fi .22s ease}.sec.on{display:block}
 @keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 
@@ -387,6 +387,7 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
   color: var(--text3);
   padding: 0 0.75rem;
   margin-bottom: 6px;
+  margin-top: 0;
 }
 .sidebar-section {
   padding: 0 1rem 1rem;
