@@ -415,6 +415,12 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text3);
+  padding: 0 0.75rem;
+  margin-bottom: 6px;
+}
+.sidebar-section {
+  padding: 0 1rem 1rem;
+  margin-bottom: 0.5rem;
 }
 .nav-item, .sitem, .si { color: var(--text2); border-radius: 8px; }
 .nav-item:hover, .sitem:hover, .si:hover { background: var(--bg3); color: var(--text); }
@@ -423,6 +429,7 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
 .nav-num, .snum, .sn { background: var(--bg3); color: var(--text3); }
 .nav-item.active .nav-num, .sitem.active .snum, .si.on .sn { background: var(--accent-soft); color: var(--accent); }
 .nav-item.done .nav-num, .sitem.done .snum, .si.dn .sn { background: var(--green-s); color: var(--green); }
+.sitem, .si { margin: 0; width: 100%; }
 </style>
 </head>
 <body>
@@ -447,17 +454,21 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
 
 <!-- ── SIDEBAR ── -->
 <aside>
-  <div class="slabel">lessons</div>
-  <button class="sitem active" onclick="go(0)" id="n0"><span class="snum">1</span>What is a branch?</button>
-  <button class="sitem" onclick="go(1)" id="n1"><span class="snum">2</span>branch, switch, checkout</button>
-  <button class="sitem" onclick="go(2)" id="n2"><span class="snum">3</span>Merging — fast-forward</button>
-  <button class="sitem" onclick="go(3)" id="n3"><span class="snum">4</span>3-way merge & conflicts</button>
-  <button class="sitem" onclick="go(4)" id="n4"><span class="snum">5</span>git rebase</button>
-  <button class="sitem" onclick="go(5)" id="n5"><span class="snum">6</span>git stash</button>
-  <div class="slabel" style="margin-top:8px">tools</div>
-  <button class="sitem" onclick="go(6)" id="n6"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Branch visualizer</button>
-  <button class="sitem" onclick="go(7)" id="n7"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Conflict resolver</button>
-  <button class="sitem" onclick="go(8)" id="n8"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Quick reference</button>
+  <div class="sidebar-label">lessons</div>
+  <div class="sidebar-section">
+    <button class="sitem active" onclick="go(0)" id="n0"><span class="snum">1</span>What is a branch?</button>
+    <button class="sitem" onclick="go(1)" id="n1"><span class="snum">2</span>branch, switch, checkout</button>
+    <button class="sitem" onclick="go(2)" id="n2"><span class="snum">3</span>Merging — fast-forward</button>
+    <button class="sitem" onclick="go(3)" id="n3"><span class="snum">4</span>3-way merge & conflicts</button>
+    <button class="sitem" onclick="go(4)" id="n4"><span class="snum">5</span>git rebase</button>
+    <button class="sitem" onclick="go(5)" id="n5"><span class="snum">6</span>git stash</button>
+  </div>
+  <div class="sidebar-label">tools</div>
+  <div class="sidebar-section">
+    <button class="sitem" onclick="go(6)" id="n6"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Branch visualizer</button>
+    <button class="sitem" onclick="go(7)" id="n7"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Conflict resolver</button>
+    <button class="sitem" onclick="go(8)" id="n8"><span class="snum" style="background:var(--blue-s);color:var(--blue)">✦</span>Quick reference</button>
+  </div>
   <div class="sprogressbox">
     <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
     <div class="spbar"><div class="spfill" id="spf"></div></div>

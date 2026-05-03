@@ -385,6 +385,12 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text3);
+  padding: 0 0.75rem;
+  margin-bottom: 6px;
+}
+.sidebar-section {
+  padding: 0 1rem 1rem;
+  margin-bottom: 0.5rem;
 }
 .nav-item, .sitem, .si { color: var(--text2); border-radius: 8px; }
 .nav-item:hover, .sitem:hover, .si:hover { background: var(--bg3); color: var(--text); }
@@ -393,6 +399,7 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
 .nav-num, .snum, .sn { background: var(--bg3); color: var(--text3); }
 .nav-item.active .nav-num, .sitem.active .snum, .si.on .sn { background: var(--accent-soft); color: var(--accent); }
 .nav-item.done .nav-num, .sitem.done .snum, .si.dn .sn { background: var(--green-s); color: var(--green); }
+.sitem, .si { margin: 0; width: 100%; }
 </style>
 </head>
 <body>
@@ -415,18 +422,22 @@ aside { background: var(--bg); border-right: 0.5px solid var(--border); }
 
 <div class="layout">
 <aside>
-  <div class="sg">lessons</div>
-  <button class="si on" onclick="go(0)" id="n0"><span class="sn">1</span>GitHub setup & SSH keys</button>
-  <button class="si" onclick="go(1)" id="n1"><span class="sn">2</span>push · pull · fetch</button>
-  <button class="si" onclick="go(2)" id="n2"><span class="sn">3</span>Fork & PR workflow</button>
-  <button class="si" onclick="go(3)" id="n3"><span class="sn">4</span>Code review</button>
-  <button class="si" onclick="go(4)" id="n4"><span class="sn">5</span>Issues, Projects & Labels</button>
-  <button class="si" onclick="go(5)" id="n5"><span class="sn">6</span>GitHub CLI (gh)</button>
-  <div class="sg" style="margin-top:8px">tools</div>
-  <button class="si" onclick="go(6)" id="n6"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Remote diagram</button>
-  <button class="si" onclick="go(7)" id="n7"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>PR simulator</button>
-  <button class="si" onclick="go(8)" id="n8"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>CLI sandbox</button>
-  <button class="si" onclick="go(9)" id="n9"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Quick reference</button>
+  <div class="sidebar-label">lessons</div>
+  <div class="sidebar-section">
+    <button class="si on" onclick="go(0)" id="n0"><span class="sn">1</span>GitHub setup & SSH keys</button>
+    <button class="si" onclick="go(1)" id="n1"><span class="sn">2</span>push · pull · fetch</button>
+    <button class="si" onclick="go(2)" id="n2"><span class="sn">3</span>Fork & PR workflow</button>
+    <button class="si" onclick="go(3)" id="n3"><span class="sn">4</span>Code review</button>
+    <button class="si" onclick="go(4)" id="n4"><span class="sn">5</span>Issues, Projects & Labels</button>
+    <button class="si" onclick="go(5)" id="n5"><span class="sn">6</span>GitHub CLI (gh)</button>
+  </div>
+  <div class="sidebar-label">tools</div>
+  <div class="sidebar-section">
+    <button class="si" onclick="go(6)" id="n6"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Remote diagram</button>
+    <button class="si" onclick="go(7)" id="n7"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>PR simulator</button>
+    <button class="si" onclick="go(8)" id="n8"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>CLI sandbox</button>
+    <button class="si" onclick="go(9)" id="n9"><span class="sn" style="background:var(--pu-s);color:var(--pu)">✦</span>Quick reference</button>
+  </div>
   <div class="spbox">
     <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
     <div class="spbar"><div class="spfill" id="spf"></div></div>
