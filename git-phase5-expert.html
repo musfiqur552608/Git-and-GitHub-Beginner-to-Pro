@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Phase 5 — Expert & Open Source</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080d;--bg2:#0c0e15;--bg3:#11141e;--bg4:#181c28;
+  --bd:rgba(255,255,255,0.05);--bd2:rgba(255,255,255,0.09);
+  --tx:#cdd5e0;--tx2:#6b7a8d;--tx3:#343d4d;
+  --go:#ffd700;--go-s:rgba(255,215,0,0.09);--go-b:rgba(255,215,0,0.2);
+  --or:#ff8c42;--or-s:rgba(255,140,66,0.09);--or-b:rgba(255,140,66,0.2);
+  --pu:#9d7cf4;--pu-s:rgba(157,124,244,0.1);--pu-b:rgba(157,124,244,0.22);
+  --tl:#00c9a7;--tl-s:rgba(0,201,167,0.09);--tl-b:rgba(0,201,167,0.2);
+  --rd:#f77;--rd-s:rgba(255,119,119,0.09);--rd-b:rgba(255,119,119,0.2);
+  --bl:#60a5fa;--bl-s:rgba(96,165,250,0.09);--bl-b:rgba(96,165,250,0.2);
+  --grn:#34d399;--grn-s:rgba(52,211,153,0.09);--grn-b:rgba(52,211,153,0.2);
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Playfair Display',Georgia,serif;
+  --sw:272px;--hh:56px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);font-size:14px;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--hh);background:rgba(7,8,13,0.97);backdrop-filter:blur(24px);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;padding:0 1.5rem;gap:12px}
+.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.hico{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--go),var(--or));display:flex;align-items:center;justify-content:center;font-size:15px}
+.hname{font-size:13px;font-weight:500;color:var(--tx)}.hname em{color:var(--go);font-style:normal}
+.hfill{flex:1}
+.hbadge{font-size:10px;padding:3px 11px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx3)}
+.hbadge.on{background:var(--go-s);border-color:var(--go-b);color:var(--go)}
+.hpwrap{position:fixed;top:var(--hh);left:0;right:0;z-index:199;height:2px;background:var(--bd)}
+.hpfill{height:100%;background:linear-gradient(90deg,var(--go),var(--or));width:0%;transition:width .35s}
+
+/* LAYOUT */
+.layout{display:flex;padding-top:calc(var(--hh)+2px);min-height:100vh}
+
+/* SIDEBAR */
+aside{width:var(--sw);flex-shrink:0;position:fixed;top:calc(var(--hh)+2px);left:0;bottom:0;overflow-y:auto;border-right:0.5px solid var(--bd);background:var(--bg);padding:1.25rem 0 3rem}
+.sg{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);padding:0 1.25rem;margin-bottom:4px;margin-top:6px}
+.si{display:flex;align-items:center;gap:9px;padding:7px 10px;margin:0 8px;border-radius:7px;cursor:pointer;color:var(--tx2);font-size:12px;border:none;background:transparent;width:calc(100% - 16px);text-align:left;transition:all .12s}
+.si:hover{background:var(--bg3);color:var(--tx)}
+.si.on{background:var(--go-s);color:var(--go)}
+.si.dn{color:var(--grn)}
+.sn{width:22px;height:22px;border-radius:5px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tx3);flex-shrink:0;transition:all .12s}
+.si.on .sn{background:var(--go-s);color:var(--go)}
+.si.dn .sn{background:var(--grn-s);color:var(--grn)}
+.spbox{margin:1.25rem 1rem 0;padding:12px 14px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:10px}
+.sprow{font-size:10px;color:var(--tx3);display:flex;justify-content:space-between;margin-bottom:5px}
+.spbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.spfill{height:100%;background:linear-gradient(90deg,var(--go),var(--or));border-radius:2px;transition:width .4s;width:0%}
+
+/* MAIN */
+main{margin-left:var(--sw);flex:1;max-width:920px;padding:2.5rem 2.5rem 6rem}
+.sec{display:none;animation:fi .2s ease}.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{background:var(--bg2);border:0.5px solid var(--bd);border-radius:16px;padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-90px;right:-90px;width:340px;height:340px;background:radial-gradient(circle,rgba(255,215,0,.05),transparent 70%);pointer-events:none}
+.ey{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--go);margin-bottom:.5rem}
+.hero h1{font-family:var(--serif);font-size:28px;font-weight:900;line-height:1.18;color:var(--tx);margin-bottom:.65rem}
+.hero h1 i{font-style:italic;color:var(--go)}
+.hero p{font-size:13px;color:var(--tx2);line-height:1.75;max-width:580px}
+.mr{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.mp{font-size:11px;padding:3px 12px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx2)}
+.mp.go{border-color:var(--go-b);color:var(--go);background:var(--go-s)}
+.mp.or{border-color:var(--or-b);color:var(--or);background:var(--or-s)}
+
+/* CONTENT */
+.cb{margin-bottom:1.85rem}
+.ct{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
+.ct::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.prose{font-size:13px;color:var(--tx2);line-height:1.8;margin-bottom:.8rem}
+.prose strong{color:var(--tx);font-weight:500}
+.prose code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:0.5px solid var(--bd);padding:1px 6px;border-radius:4px;color:var(--go)}
+
+/* CODE */
+.code{background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.codeh{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bd)}
+.cdd{display:flex;gap:5px}.cd{width:10px;height:10px;border-radius:50%}
+.cfn{font-size:11px;color:var(--tx3);flex:1}
+.ccp{font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:4px;transition:all .12s;font-family:var(--mono)}
+.ccp:hover{background:var(--bg4);color:var(--tx2)}
+.codeb{padding:.9rem 1.2rem;font-family:var(--mono);font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre}
+.go{color:var(--go)}.or{color:var(--or)}.pu{color:var(--pu)}.tl{color:var(--tl)}.rd{color:var(--rd)}.bl{color:var(--bl)}.grn{color:var(--grn)}.cm{color:var(--tx3);font-style:italic}.tx{color:var(--tx)}.d{color:var(--tx2)}
+
+/* NOTE */
+.note{padding:10px 15px;border-radius:8px;margin-bottom:.8rem;font-size:12px;line-height:1.7;display:flex;gap:10px;border:0.5px solid}
+.note i{font-size:14px;flex-shrink:0;font-style:normal}
+.note b{color:var(--tx);font-weight:500}
+.note.tip{background:var(--bl-s);border-color:var(--bl-b);color:var(--tx2)}
+.note.warn{background:var(--or-s);border-color:var(--or-b);color:var(--tx2)}
+.note.ok{background:var(--grn-s);border-color:var(--grn-b);color:var(--tx2)}
+.note.danger{background:var(--rd-s);border-color:var(--rd-b);color:var(--tx2)}
+.note.gold{background:var(--go-s);border-color:var(--go-b);color:var(--tx2)}
+
+/* TABLE */
+.tbl{border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{padding:7px 13px;text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);background:var(--bg3);border-bottom:0.5px solid var(--bd);font-weight:400}
+.tbl td{padding:8px 13px;font-size:12px;border-bottom:0.5px solid var(--bd);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.tbl td:first-child{font-family:var(--mono);color:var(--go);width:42%;white-space:nowrap}
+.tbl td:last-child{color:var(--tx2)}
+
+/* EXERCISE */
+.exc{border:0.5px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:.8rem;transition:border-color .15s}
+.exc:hover{border-color:var(--bd2)}.exc.dn{border-color:var(--grn-b)}
+.exh{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--bg2);border-bottom:0.5px solid var(--bd);cursor:pointer}
+.ck{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;cursor:pointer}
+.ck svg{width:12px;height:12px;stroke:white;stroke-width:2.5;fill:none;opacity:0;transition:opacity .15s}
+.exc.dn .ck{background:var(--grn);border-color:var(--grn)}.exc.dn .ck svg{opacity:1}
+.etitle{font-size:13px;font-weight:500;color:var(--tx);flex:1}
+.ebadge{font-size:10px;padding:2px 8px;border-radius:9px;border:0.5px solid}
+.easy{border-color:var(--grn-b);color:var(--grn);background:var(--grn-s)}
+.med{border-color:var(--or-b);color:var(--or);background:var(--or-s)}
+.hard{border-color:var(--rd-b);color:var(--rd);background:var(--rd-s)}
+.etog{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.etog svg{width:12px;height:12px;stroke:var(--tx3);fill:none;transition:transform .15s}
+.exh[aria-expanded="true"] .etog svg{transform:rotate(180deg)}
+.exb{padding:1rem 1.2rem;background:var(--bg2);display:none}.exb.open{display:block}
+.sl{list-style:none;display:flex;flex-direction:column;gap:7px}
+.si2{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--tx2);line-height:1.5}
+.sn2{width:20px;height:20px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--bd);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--tx3);flex-shrink:0;margin-top:1px}
+.hint{margin-top:.7rem;padding:9px 13px;background:var(--bl-s);border:0.5px solid var(--bl-b);border-radius:7px;font-size:12px;color:var(--tx2);line-height:1.6}
+.hint strong{color:var(--bl)}
+
+/* QUIZ */
+.qc{border:0.5px solid var(--bd);border-radius:10px;background:var(--bg2);padding:1.35rem;margin-bottom:.8rem}
+.qq{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:.8rem}
+.qo{display:flex;flex-direction:column;gap:5px}
+.qb{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;border:0.5px solid var(--bd);border-radius:7px;cursor:pointer;font-size:12px;color:var(--tx2);background:var(--bg3);transition:all .12s;text-align:left;font-family:var(--mono);width:100%}
+.qb:hover{border-color:var(--bd2);color:var(--tx)}
+.qb.ok{border-color:var(--grn-b);background:var(--grn-s);color:var(--grn)}
+.qb.no{border-color:var(--rd-b);background:var(--rd-s);color:var(--rd)}
+.qfb{margin-top:.6rem;padding:9px 13px;border-radius:7px;font-size:12px;display:none;border:0.5px solid}
+.qfb.show{display:block}
+.qfb.ok{background:var(--grn-s);border-color:var(--grn-b);color:var(--grn)}
+.qfb.no{background:var(--rd-s);border-color:var(--rd-b);color:var(--rd)}
+
+/* GIT OBJECTS VISUALIZER */
+.objviz{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.objvizh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.objvizt{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.objbtn{font-size:10px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);border:0.5px solid var(--bd);background:var(--bg4);color:var(--tx2);transition:all .13s}
+.objbtn:hover{border-color:var(--bd2);color:var(--tx)}
+.objbtn.on{background:var(--go-s);border-color:var(--go-b);color:var(--go)}
+.objcanvas{background:#040508;padding:1.5rem;min-height:200px;overflow-x:auto}
+.objinfo{padding:10px 16px;background:var(--bg2);border-top:0.5px solid var(--bd);font-size:12px;color:var(--tx2);min-height:38px}
+
+/* BISECT SIMULATOR */
+.bisect{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.bisecth{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bisectlog{background:#040508;padding:1rem 1.2rem;font-family:var(--mono);font-size:12px;line-height:1.8;min-height:160px;max-height:260px;overflow-y:auto;color:var(--tx2)}
+.bisectctrl{display:flex;gap:8px;padding:10px 14px;background:var(--bg2);border-top:0.5px solid var(--bd);flex-wrap:wrap}
+.bsbtn{font-size:11px;padding:6px 16px;border-radius:6px;cursor:pointer;font-family:var(--mono);border:0.5px solid;transition:all .13s}
+.bsbtn.good{background:var(--grn-s);border-color:var(--grn-b);color:var(--grn)}
+.bsbtn.good:hover{background:var(--grn);color:var(--bg)}
+.bsbtn.bad{background:var(--rd-s);border-color:var(--rd-b);color:var(--rd)}
+.bsbtn.bad:hover{background:var(--rd);color:white}
+.bsbtn.reset{background:var(--bg3);border-color:var(--bd2);color:var(--tx2)}
+.bsbtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* HOOKS BUILDER */
+.hookbox{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.hookboxh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.hookgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:1rem;background:var(--bg2)}
+.hookcard{padding:12px 14px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:9px;cursor:pointer;transition:all .15s}
+.hookcard:hover{border-color:var(--bd2)}
+.hookcard.on{border-color:var(--go-b);background:var(--go-s)}
+.hookcard-name{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:3px;font-family:var(--mono)}
+.hookcard.on .hookcard-name{color:var(--go)}
+.hookcard-when{font-size:10px;color:var(--tx3);margin-bottom:6px}
+.hookcard-desc{font-size:11px;color:var(--tx2);line-height:1.4}
+.hookout{background:#040508;border-top:0.5px solid var(--bd);padding:1rem 1.2rem;font-family:var(--mono);font-size:12px;line-height:1.85;min-height:120px;white-space:pre;color:var(--tx2)}
+
+/* CONVENTIONAL COMMITS */
+.ccbuilder{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.ccbh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.ccform{padding:1rem;background:var(--bg2);display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
+.cclabel{font-size:11px;color:var(--tx3);text-align:right;padding-right:8px}
+.ccselect,.ccinput{background:var(--bg3);border:0.5px solid var(--bd);border-radius:6px;padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--tx);outline:none;transition:border-color .12s;width:100%}
+.ccselect:focus,.ccinput:focus{border-color:var(--go-b)}
+.ccselect option{background:var(--bg3)}
+.ccpreview{background:#040508;border-top:0.5px solid var(--bd);padding:.85rem 1.2rem;font-family:var(--mono);font-size:13px;color:var(--tx2)}
+.cc-type{color:var(--go)}.cc-scope{color:var(--pu)}.cc-breaking{color:var(--rd)}.cc-desc{color:var(--tx)}
+
+/* OPEN SOURCE CHECKLIST */
+.oscl{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.osclh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
+.oscl-pct{font-size:12px;color:var(--go);font-family:var(--mono)}
+.osclrows{display:flex;flex-direction:column;background:var(--bg2)}
+.osclrow{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-bottom:0.5px solid var(--bd);cursor:pointer;transition:background .12s}
+.osclrow:last-child{border-bottom:none}
+.osclrow:hover{background:var(--bg3)}
+.osclrow.checked{background:var(--grn-s)}
+.osclcheck{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
+.osclcheck svg{width:10px;height:10px;stroke:white;stroke-width:2.5;fill:none;opacity:0;transition:opacity .15s}
+.osclrow.checked .osclcheck{background:var(--grn);border-color:var(--grn)}
+.osclrow.checked .osclcheck svg{opacity:1}
+.oscl-text{font-size:12px;color:var(--tx2);line-height:1.5}
+.osclrow.checked .oscl-text{color:var(--grn)}
+.osclbar{height:3px;background:var(--bg4);border-radius:2px;margin:0;overflow:hidden}
+.osclfill{height:100%;background:linear-gradient(90deg,var(--grn),var(--tl));border-radius:2px;transition:width .3s;width:0%}
+
+/* COMPLETION SCREEN */
+.completion{text-align:center;padding:3rem 2rem;background:var(--bg2);border:0.5px solid var(--go-b);border-radius:16px;margin-bottom:2rem;position:relative;overflow:hidden}
+.completion::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.06),transparent 70%);pointer-events:none}
+.completion-icon{font-size:56px;margin-bottom:1rem}
+.completion h2{font-family:var(--serif);font-size:32px;font-weight:900;color:var(--tx);margin-bottom:.5rem}
+.completion h2 i{font-style:italic;color:var(--go)}
+.completion p{font-size:13px;color:var(--tx2);max-width:560px;margin:0 auto 1.5rem}
+
+/* NAV */
+.lnav{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;padding-top:1.5rem;border-top:0.5px solid var(--bd)}
+.btnp{padding:10px 22px;background:var(--go);color:#1a1000;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:all .13s;display:flex;align-items:center;gap:7px}
+.btnp:hover{filter:brightness(1.1);transform:translateX(2px)}
+.btns{padding:10px 18px;background:var(--bg3);color:var(--tx2);border:0.5px solid var(--bd);border-radius:7px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .13s}
+.btns:hover{background:var(--bg4);color:var(--tx)}
+
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ctick{padding:9px 13px;background:var(--grn-s);border:0.5px solid var(--grn-b);border-radius:7px;font-size:12px;color:var(--grn)}
+
+/* Shared shell */
+:root{
+  --bg:#0b0f14;--bg2:#111823;--bg3:#171f2d;--bg4:#1f293a;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#e5e9f0;--text2:#a0a9b8;--text3:#6b7486;
+  --accent:#2dd4bf;--accent-soft:rgba(45,212,191,0.16);
+  --or:var(--accent);--or-s:var(--accent-soft);--or-b:rgba(45,212,191,0.28);
+  --or2:#55e0cb;--or-soft:var(--accent-soft);--or-glow:rgba(45,212,191,0.12);
+  --blue:var(--accent);--blue-s:var(--accent-soft);--blue-b:rgba(45,212,191,0.28);
+  --purple:#60a5fa;--purple-s:rgba(96,165,250,0.14);
+  --green:#4ade80;--green-s:rgba(74,222,128,0.12);
+  --yellow:#facc15;--yellow-s:rgba(250,204,21,0.14);
+  --red:#f87171;--red-s:rgba(248,113,113,0.14);--red-b:rgba(248,113,113,0.2);
+  --teal:var(--accent);--teal-s:var(--accent-soft);
+  --pink:#fb7185;--pink-s:rgba(251,113,133,0.14);
+  --gold:#fbbf24;--gold-s:rgba(251,191,36,0.14);
+  --grn:var(--green);--grn-s:var(--green-s);
+  --sky:#38bdf8;--sky-s:rgba(56,189,248,0.14);--sky-b:rgba(56,189,248,0.2);
+  --bd:var(--border);--bd2:var(--border2);
+  --tx:var(--text);--tx2:var(--text2);--tx3:var(--text3);
+  --go:var(--accent);--go-s:var(--accent-soft);--go-b:rgba(45,212,191,0.28);
+  --tl:#38bdf8;--tl-s:rgba(56,189,248,0.14);--tl-b:rgba(56,189,248,0.28);
+  --bl:#38bdf8;--bl-s:rgba(56,189,248,0.14);--bl-b:rgba(56,189,248,0.28);
+  --pu:#60a5fa;--pu-s:rgba(96,165,250,0.14);--pu-b:rgba(96,165,250,0.28);
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --serif:'Fraunces',Georgia,serif;
+  --header-h:56px;--sidebar-w:260px;--hh:56px;--sw:260px;
+}
+
+body{background:var(--bg);color:var(--text);font-family:var(--mono)}
+header{height:var(--header-h);background:rgba(11,15,20,0.92);border-bottom:0.5px solid var(--border)}
+.header-brand,.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-icon,.hico{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7dd3fc);display:flex;align-items:center;justify-content:center;color:white}
+.brand-name,.hname{font-size:13px;font-weight:500;color:var(--text);letter-spacing:0.02em}
+.brand-name span,.hname span,.hname em{color:var(--accent);font-style:normal}
+.top-nav{display:flex;gap:8px;align-items:center;margin-left:1rem}
+.top-nav .nav-link{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:13px;border:0.5px solid transparent}
+.top-nav .nav-link:hover{background:var(--bg3);color:var(--text)}
+.top-nav .nav-link.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+aside{background:var(--bg);border-right:0.5px solid var(--border);top:calc(var(--header-h) + 2px);padding:0.5rem 0 2rem}
+.sidebar-label,.sg{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);padding:0 0.75rem;margin-bottom:6px;margin-top:0}
+.sidebar-section{padding:0 1rem 1rem;margin-bottom:0.5rem}
+.nav-item,.si{color:var(--text2);border-radius:8px;margin:0;width:100%}
+.nav-item:hover,.si:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active,.si.on{background:var(--accent-soft);color:var(--accent)}
+.nav-item.done,.si.dn{color:var(--green)}
+.nav-num,.sn{background:var(--bg3);color:var(--text3)}
+.nav-item.active .nav-num,.si.on .sn{background:var(--accent-soft);color:var(--accent)}
+.nav-item.done .nav-num,.si.dn .sn{background:var(--green-s);color:var(--green)}
+main{margin-left:var(--sw);flex:1;width:calc(100% - var(--sw));max-width:none;padding:2.5rem 2.5rem 5rem}
+
+@media(max-width:780px){:root{--sw:0px}aside{display:none}main{margin-left:0;padding:1.5rem 1.25rem 3rem}.ccform{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hbrand" href="index.html">
+    <div class="hico">🔥</div>
+    <span class="hname"><em>git</em> / phase-5</span>
+  </a>
+  <nav class="top-nav">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link" href="git-phase2-branching.html">Phase 2</a>
+    <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
+    <a class="nav-link" href="git-phase4-actions.html">Phase 4</a>
+    <a class="nav-link active" href="git-phase5-expert.html">Phase 5</a>
+  </nav>
+  <div class="hfill"></div>
+  <div class="hbadge on">Expert & Open Source</div>
+  <div class="hbadge">weeks 11–12</div>
+</header>
+<div class="hpwrap"><div class="hpfill" id="gp"></div></div>
+
+<div class="layout">
+<aside>
+  <div class="sidebar-label">lessons</div>
+  <div class="sidebar-section">
+    <button class="si on" onclick="go(0)" id="n0"><span class="sn">1</span>Git internals — the DAG</button>
+    <button class="si" onclick="go(1)" id="n1"><span class="sn">2</span>reflog · bisect · cherry-pick</button>
+    <button class="si" onclick="go(2)" id="n2"><span class="sn">3</span>Submodules & subtrees</button>
+    <button class="si" onclick="go(3)" id="n3"><span class="sn">4</span>Git hooks</button>
+    <button class="si" onclick="go(4)" id="n4"><span class="sn">5</span>Conventional Commits</button>
+    <button class="si" onclick="go(5)" id="n5"><span class="sn">6</span>First open source PR</button>
+  </div>
+  <div class="sidebar-label">tools</div>
+  <div class="sidebar-section">
+    <button class="si" onclick="go(6)" id="n6"><span class="sn" style="background:var(--go-s);color:var(--go)">✦</span>Git objects visualizer</button>
+    <button class="si" onclick="go(7)" id="n7"><span class="sn" style="background:var(--go-s);color:var(--go)">✦</span>Bisect simulator</button>
+    <button class="si" onclick="go(8)" id="n8"><span class="sn" style="background:var(--go-s);color:var(--go)">✦</span>Hooks builder</button>
+    <button class="si" onclick="go(9)" id="n9"><span class="sn" style="background:var(--go-s);color:var(--go)">✦</span>Conventional commits</button>
+    <button class="si" onclick="go(10)" id="n10"><span class="sn" style="background:var(--go-s);color:var(--go)">✦</span>OS checklist</button>
+    <button class="si" onclick="go(11)" id="n11"><span class="sn" style="background:var(--go-s);color:var(--go)">🏆</span>Completion & reference</button>
+  </div>
+  <div class="spbox">
+    <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
+    <div class="spbar"><div class="spfill" id="spf"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ═══════════════════ L0: Git Internals ═══════════════════ -->
+<section class="sec on" id="s0">
+  <div class="hero">
+    <div class="ey">Lesson 01 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>Git internals — <i>the DAG</i></h1>
+    <p>Most developers use Git for years without understanding what's underneath. Once you see the object model, every Git command becomes obvious — you'll never be confused by a weird state again.</p>
+    <div class="mr"><span class="mp go">~35 min</span><span class="mp or">expert level</span><span class="mp">mind-bending</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git's four object types</div>
+    <p class="prose">Everything in Git — files, directories, commits, tags — is stored as one of four object types in <code>.git/objects/</code>. Each object is identified by a <strong>SHA-1 hash</strong> of its contents.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem">
+      <div style="padding:12px;background:var(--bg2);border:0.5px solid var(--go-b);border-radius:9px;text-align:center">
+        <div style="font-size:20px;margin-bottom:6px">📄</div>
+        <div style="font-size:11px;font-weight:500;color:var(--go);margin-bottom:3px">blob</div>
+        <div style="font-size:11px;color:var(--tx2);line-height:1.4">File contents (no name, no path)</div>
+      </div>
+      <div style="padding:12px;background:var(--bg2);border:0.5px solid var(--pu-b);border-radius:9px;text-align:center">
+        <div style="font-size:20px;margin-bottom:6px">📁</div>
+        <div style="font-size:11px;font-weight:500;color:var(--pu);margin-bottom:3px">tree</div>
+        <div style="font-size:11px;color:var(--tx2);line-height:1.4">Directory listing (names + blob/tree refs)</div>
+      </div>
+      <div style="padding:12px;background:var(--bg2);border:0.5px solid var(--tl-b);border-radius:9px;text-align:center">
+        <div style="font-size:20px;margin-bottom:6px">🔵</div>
+        <div style="font-size:11px;font-weight:500;color:var(--tl);margin-bottom:3px">commit</div>
+        <div style="font-size:11px;color:var(--tx2);line-height:1.4">Points to a tree + parent(s) + metadata</div>
+      </div>
+      <div style="padding:12px;background:var(--bg2);border:0.5px solid var(--or-b);border-radius:9px;text-align:center">
+        <div style="font-size:20px;margin-bottom:6px">🏷</div>
+        <div style="font-size:11px;font-weight:500;color:var(--or);margin-bottom:3px">tag</div>
+        <div style="font-size:11px;color:var(--tx2);line-height:1.4">Annotated pointer to a specific commit</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">inspecting git objects — plumbing commands</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git cat-file — peek inside any object</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Show the type of any object</span>
+<span class="or">$</span> <span class="bl">git cat-file</span> <span class="go">-t</span> HEAD
+<span class="d">commit</span>
+
+<span class="cm"># Show the content of a commit object</span>
+<span class="or">$</span> <span class="bl">git cat-file</span> <span class="go">-p</span> HEAD
+<span class="d">tree 8d3c5a1f9e2b47dc6a18f3e7d9c4b2a0e1f8d3c5
+parent 4f2a1b3d8e9c7f6a5b4d3c2e1f0a9b8c7d6e5f4
+author Your Name &lt;you@email.com&gt; 1700000000 +0000
+committer Your Name &lt;you@email.com&gt; 1700000000 +0000
+
+add user authentication module</span>
+
+<span class="cm"># Show what's in a tree (directory snapshot)</span>
+<span class="or">$</span> <span class="bl">git cat-file</span> <span class="go">-p</span> 8d3c5a1
+<span class="d">100644 blob a8f3b2c1... .gitignore
+100644 blob d4e5f6a7... README.md
+040000 tree 9c8d7e6f... src
+100644 blob 1a2b3c4d... package.json</span>
+
+<span class="cm"># Show a blob (file contents at a commit)</span>
+<span class="or">$</span> <span class="bl">git cat-file</span> <span class="go">-p</span> a8f3b2c1
+<span class="d">node_modules/
+.env
+dist/</span>
+
+<span class="cm"># Show the full object graph for HEAD</span>
+<span class="or">$</span> <span class="bl">git log</span> <span class="go">--oneline --graph --all</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Key insight:</b> Git never stores diffs — it stores complete snapshots. A commit object points to a tree, which points to blobs (file contents). The magic: if a file hasn't changed, the tree just reuses the same blob hash. No duplication.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">how branches and HEAD really work</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">.git/ — reading the raw files</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># HEAD is just a text file pointing to a branch</span>
+<span class="or">$</span> <span class="bl">cat</span> .git/HEAD
+<span class="d">ref: refs/heads/main</span>
+
+<span class="cm"># A branch is just a file containing a commit hash</span>
+<span class="or">$</span> <span class="bl">cat</span> .git/refs/heads/main
+<span class="d">4f2a1b3d8e9c7f6a5b4d3c2e1f0a9b8c7d6e5f4</span>
+
+<span class="cm"># So "HEAD" = file → branch name → file → commit hash</span>
+<span class="cm"># That's the entire branch system. Just text files!</span>
+
+<span class="cm"># Detached HEAD = HEAD points directly to a commit, not a branch</span>
+<span class="or">$</span> <span class="bl">git checkout</span> 4f2a1b3     <span class="cm"># detach HEAD</span>
+<span class="or">$</span> <span class="bl">cat</span> .git/HEAD
+<span class="d">4f2a1b3d8e9c7f6a5b4d3c2e1f0a9b8c7d6e5f4</span>  <span class="cm">← directly, no branch</span>
+
+<span class="cm"># Fix detached HEAD: create a branch where you are</span>
+<span class="or">$</span> <span class="bl">git switch</span> <span class="go">-c</span> my-recovery-branch</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">quiz — git internals</div>
+    <div class="qc">
+      <div class="qq">What does a Git branch actually consist of at the file system level?</div>
+      <div class="qo">
+        <button class="qb" onclick="quiz(this,'wrong','q0')">A. A full copy of all files at that point in time</button>
+        <button class="qb" onclick="quiz(this,'wrong','q0')">B. A compressed archive of the working directory</button>
+        <button class="qb" onclick="quiz(this,'correct','q0')">C. A single text file containing a 40-character commit SHA</button>
+        <button class="qb" onclick="quiz(this,'wrong','q0')">D. A database record with metadata about the branch</button>
+      </div>
+      <div class="qfb" id="q0-fb"></div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <span style="font-size:12px;color:var(--tx3)">lesson 1 of 6</span>
+    <button class="btnp" onclick="nxt(0)">Next: reflog · bisect · cherry-pick →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L1: reflog, bisect, cherry-pick ═══════════════════ -->
+<section class="sec" id="s1">
+  <div class="hero">
+    <div class="ey">Lesson 02 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>reflog · bisect · <i>cherry-pick</i></h1>
+    <p>The expert toolkit. <code>reflog</code> lets you undo anything. <code>bisect</code> finds bugs in O(log n) steps. <code>cherry-pick</code> copies specific commits anywhere. These three commands will save you countless hours.</p>
+    <div class="mr"><span class="mp go">~45 min</span><span class="mp or">power commands</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git reflog — your time machine & safety net</div>
+    <p class="prose"><code>git reflog</code> records every movement of HEAD — every checkout, commit, reset, merge. Even "deleted" commits live in reflog for 90 days. You can undo almost anything with it.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git reflog — recovering lost work</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Show all recent HEAD movements</span>
+<span class="or">$</span> <span class="bl">git reflog</span>
+<span class="d">4f2a1b3 HEAD@{0}: commit: add auth module
+d8c3f91 HEAD@{1}: checkout: moving from feature to main
+a1b2c3d HEAD@{2}: commit: WIP — login form
+9c3e001 HEAD@{3}: commit (amend): fix typo in README
+c0ffee0 HEAD@{4}: reset: moving to HEAD~2   ← you reset here!</span>
+
+<span class="cm"># Recover commits after an accidental reset --hard</span>
+<span class="or">$</span> <span class="bl">git reset</span> <span class="go">--hard</span> a1b2c3d    <span class="cm"># go back to before the reset</span>
+<span class="cm"># OR create a branch at any reflog point</span>
+<span class="or">$</span> <span class="bl">git switch</span> <span class="go">-c</span> recovered HEAD@{3}
+
+<span class="cm"># Show reflog for a specific branch</span>
+<span class="or">$</span> <span class="bl">git reflog</span> show feature/login
+
+<span class="cm"># Expire old reflog entries (careful!)</span>
+<span class="or">$</span> <span class="bl">git reflog expire</span> <span class="go">--expire=30.days</span></div>
+    </div>
+    <div class="note ok"><i>✓</i><div><b>The golden rule:</b> Whenever you think you've lost commits — run <code>git reflog</code> first. In 10 years of Git use, reflog has saved entire days of work. It's the real undo button.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git bisect — binary search for bugs</div>
+    <p class="prose"><code>git bisect</code> uses binary search to find the exact commit that introduced a bug. With 1000 commits of history, it finds the culprit in only 10 steps (log₂ 1000 ≈ 10).</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git bisect — finding a bug in 10 steps</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Start bisect session</span>
+<span class="or">$</span> <span class="bl">git bisect start</span>
+
+<span class="cm"># Tell Git: current commit is BAD (bug is present)</span>
+<span class="or">$</span> <span class="bl">git bisect bad</span>                   <span class="cm"># or: git bisect bad HEAD</span>
+
+<span class="cm"># Tell Git: this old commit was GOOD (bug didn't exist)</span>
+<span class="or">$</span> <span class="bl">git bisect good</span> v1.0.0            <span class="cm"># or any known-good commit hash</span>
+
+<span class="cm"># Git checks out a commit in the middle. Test it!</span>
+<span class="d">Bisecting: 512 revisions left to test (roughly 9 steps)</span>
+<span class="cm"># Run your test / reproduce the bug manually</span>
+
+<span class="or">$</span> <span class="bl">git bisect good</span>                   <span class="cm"># bug not here → go later</span>
+<span class="or">$</span> <span class="bl">git bisect bad</span>                    <span class="cm"># bug here → go earlier</span>
+
+<span class="cm"># After ~9 rounds, Git announces the culprit:</span>
+<span class="grn">a8f3b2c1 is the first bad commit</span>
+<span class="d">Author: SomeContributor &lt;dev@example.com&gt;
+    remove null check from user.getName()</span>
+
+<span class="cm"># Always finish the session</span>
+<span class="or">$</span> <span class="bl">git bisect reset</span>
+
+<span class="cm"># AUTOMATED bisect with a test script</span>
+<span class="or">$</span> <span class="bl">git bisect run</span> npm test           <span class="cm"># auto: pass=good, fail=bad</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git cherry-pick — transplant specific commits</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git cherry-pick — pick individual commits</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Apply a single commit to your current branch</span>
+<span class="or">$</span> <span class="bl">git cherry-pick</span> a8f3b2c1
+
+<span class="cm"># Apply a range of commits (a exclusive, b inclusive)</span>
+<span class="or">$</span> <span class="bl">git cherry-pick</span> a8f3b2c..f7d9e3a
+
+<span class="cm"># Pick without committing — inspect first</span>
+<span class="or">$</span> <span class="bl">git cherry-pick</span> <span class="go">--no-commit</span> a8f3b2c1
+
+<span class="cm"># Apply the fix from a hotfix branch to main</span>
+<span class="or">$</span> <span class="bl">git switch</span> main
+<span class="or">$</span> <span class="bl">git cherry-pick</span> hotfix/critical-bug  <span class="cm"># picks branch tip commit</span>
+
+<span class="cm"># Real scenario: backport a feature to an older release</span>
+<span class="or">$</span> <span class="bl">git switch</span> release/v1.x
+<span class="or">$</span> <span class="bl">git cherry-pick</span> a8f3b2c1  <span class="cm"># transplant the fix from main</span>
+
+<span class="cm"># If conflict: resolve, then</span>
+<span class="or">$</span> <span class="bl">git cherry-pick</span> <span class="go">--continue</span>
+<span class="or">$</span> <span class="bl">git cherry-pick</span> <span class="go">--abort</span>   <span class="cm"># or bail out entirely</span></div>
+    </div>
+    <div class="note warn"><i>⚠</i><div><b>Cherry-pick creates new commits</b> with new hashes — the original commit still exists on its original branch. This is intentional (two branches, two records), but be aware when collaborating.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">more expert commands</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td>git worktree add &lt;path&gt;</td><td>Check out a branch in a separate directory — run two branches simultaneously</td></tr>
+      <tr><td>git shortlog -sn</td><td>Contribution count by author, sorted — great for attribution</td></tr>
+      <tr><td>git log -S "term"</td><td>Find all commits that added or removed a specific string — the pickaxe</td></tr>
+      <tr><td>git blame -L 10,20 file</td><td>Show who wrote lines 10–20 of a file with commit info</td></tr>
+      <tr><td>git stash branch &lt;name&gt;</td><td>Create a branch directly from a stash entry</td></tr>
+      <tr><td>git gc --aggressive</td><td>Pack objects and clean up loose refs (reduces repo size)</td></tr>
+      <tr><td>git filter-repo</td><td>Rewrite history — remove secrets, rename files across all commits</td></tr>
+      <tr><td>git tag -a v1.0.0 -m "msg"</td><td>Create an annotated tag for a release</td></tr>
+    </table></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(1)">← Back</button>
+    <button class="btnp" onclick="nxt(1)">Next: Submodules & subtrees →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L2: Submodules & Subtrees ═══════════════════ -->
+<section class="sec" id="s2">
+  <div class="hero">
+    <div class="ey">Lesson 03 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>Submodules &amp; <i>subtrees</i></h1>
+    <p>When your project depends on another Git repo — a shared library, a theme, a vendor SDK — submodules and subtrees let you include it with proper version pinning.</p>
+    <div class="mr"><span class="mp go">~30 min</span><span class="mp or">advanced</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git submodules — nested repos</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">submodule workflow</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Add a submodule</span>
+<span class="or">$</span> <span class="bl">git submodule add</span> git@github.com:org/shared-lib.git libs/shared
+
+<span class="cm"># Clone a repo that has submodules</span>
+<span class="or">$</span> <span class="bl">git clone</span> <span class="go">--recurse-submodules</span> git@github.com:you/project.git
+<span class="cm"># Or initialize submodules in an already-cloned repo:</span>
+<span class="or">$</span> <span class="bl">git submodule update</span> <span class="go">--init --recursive</span>
+
+<span class="cm"># Update all submodules to their latest commits</span>
+<span class="or">$</span> <span class="bl">git submodule update</span> <span class="go">--remote --merge</span>
+
+<span class="cm"># See submodule status</span>
+<span class="or">$</span> <span class="bl">git submodule status</span>
+<span class="d">-a8f3b2c libs/shared (v2.1.0)   ← - means not initialized</span>
+<span class="d"> a8f3b2c libs/shared (v2.1.0)   ← space means up to date</span>
+<span class="d">+a8f3b2c libs/shared (v2.1.0)   ← + means newer commit exists</span></div>
+    </div>
+    <div class="note warn"><i>⚠</i><div><b>Submodule gotcha:</b> Submodules pin to a specific commit — not a branch. When the library updates, you must explicitly run <code>git submodule update --remote</code> and commit the pointer change. Forgetting this is the #1 submodule pain point.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">git subtree — simpler alternative</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">git subtree — merge another repo as a directory</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Add another repo as a subdirectory</span>
+<span class="or">$</span> <span class="bl">git subtree add</span> <span class="go">--prefix</span>=libs/shared \
+    git@github.com:org/shared-lib.git main <span class="go">--squash</span>
+
+<span class="cm"># Pull upstream changes into the subtree</span>
+<span class="or">$</span> <span class="bl">git subtree pull</span> <span class="go">--prefix</span>=libs/shared \
+    git@github.com:org/shared-lib.git main <span class="go">--squash</span>
+
+<span class="cm"># Push changes back upstream (contribute back)</span>
+<span class="or">$</span> <span class="bl">git subtree push</span> <span class="go">--prefix</span>=libs/shared \
+    git@github.com:org/shared-lib.git main</div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Submodule vs Subtree:</b> Subtrees copy the code directly into your repo. No extra <code>git submodule update</code> step for teammates — they clone normally and everything just works. Use subtrees for simpler setups.</div></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(2)">← Back</button>
+    <button class="btnp" onclick="nxt(2)">Next: Git hooks →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L3: Git Hooks ═══════════════════ -->
+<section class="sec" id="s3">
+  <div class="hero">
+    <div class="ey">Lesson 04 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>Git <i>hooks</i></h1>
+    <p>Hooks run scripts automatically at specific Git events — before a commit, before a push, after a merge. They enforce quality at the source: no bad code ever gets committed.</p>
+    <div class="mr"><span class="mp go">~35 min</span><span class="mp or">automation</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">how hooks work</div>
+    <p class="prose">Hooks are executable scripts in <code>.git/hooks/</code>. Git runs them at specific lifecycle events. If a hook exits with a non-zero code, the operation is aborted. This is how you prevent bad commits before they happen.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">.git/hooks/ — creating your first hook</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># See all sample hooks</span>
+<span class="or">$</span> <span class="bl">ls</span> .git/hooks/
+<span class="d">pre-commit.sample  commit-msg.sample  pre-push.sample ...</span>
+
+<span class="cm"># Create a pre-commit hook</span>
+<span class="or">$</span> <span class="bl">cat</span> > .git/hooks/pre-commit <span class="go">&lt;&lt;'EOF'</span>
+<span class="go">#!/bin/sh</span>
+<span class="go">echo "Running linter before commit..."</span>
+<span class="go">npm run lint</span>
+<span class="go">if [ $? -ne 0 ]; then</span>
+<span class="go">  echo "❌ Lint failed. Fix errors before committing."</span>
+<span class="go">  exit 1   # ← non-zero = abort the commit</span>
+<span class="go">fi</span>
+<span class="go">echo "✓ Lint passed"</span>
+<span class="go">EOF</span>
+
+<span class="cm"># Make it executable (required!)</span>
+<span class="or">$</span> <span class="bl">chmod</span> +x .git/hooks/pre-commit
+
+<span class="cm"># Test it (runs when you git commit)</span>
+<span class="or">$</span> <span class="bl">git commit</span> <span class="go">-m</span> "test"
+<span class="d">Running linter before commit...
+✓ Lint passed
+[main 4f2a1b3] test</span>
+
+<span class="cm"># Skip hooks when needed (emergency use only)</span>
+<span class="or">$</span> <span class="bl">git commit</span> <span class="go">--no-verify</span> <span class="go">-m</span> "emergency fix"</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">sharing hooks — husky (the modern way)</div>
+    <p class="prose">The problem with <code>.git/hooks/</code> is it's not committed to the repo — every teammate must manually install hooks. <strong>Husky</strong> solves this by storing hooks in <code>.husky/</code> (which is committed) and auto-installing them on <code>npm install</code>.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">husky + lint-staged — professional setup</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Install husky and lint-staged</span>
+<span class="or">$</span> <span class="bl">npm install</span> <span class="go">--save-dev</span> husky lint-staged
+<span class="or">$</span> <span class="bl">npx husky init</span>
+
+<span class="cm"># pre-commit hook: only lint staged files</span>
+<span class="or">$</span> <span class="bl">echo</span> "npx lint-staged" > .husky/pre-commit
+
+<span class="cm"># commit-msg hook: enforce Conventional Commits</span>
+<span class="or">$</span> <span class="bl">echo</span> 'npx commitlint --edit $1' > .husky/commit-msg
+
+<span class="cm"># In package.json — lint-staged config</span>
+<span class="go">{</span>
+  <span class="bl">"lint-staged"</span><span class="go">: {</span>
+    <span class="bl">"*.{js,ts}"</span><span class="go">:</span> [<span class="pu">"eslint --fix"</span>, <span class="pu">"prettier --write"</span>],
+    <span class="bl">"*.{css,md}"</span><span class="go">:</span> [<span class="pu">"prettier --write"</span>]
+  <span class="go">}</span>
+<span class="go">}</span>
+
+<span class="cm"># Now: every git commit auto-lints only changed files</span>
+<span class="cm"># Every teammate gets hooks automatically via npm install</span></div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(3)">← Back</button>
+    <button class="btnp" onclick="nxt(3)">Next: Conventional Commits →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L4: Conventional Commits ═══════════════════ -->
+<section class="sec" id="s4">
+  <div class="hero">
+    <div class="ey">Lesson 05 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>Conventional <i>Commits</i></h1>
+    <p>A structured commit message format that enables automatic changelogs, version bumping, and semantic releases. Used by Angular, Vue, Electron, and thousands of open source projects.</p>
+    <div class="mr"><span class="mp go">~25 min</span><span class="mp or">industry standard</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">the format</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">conventional commits specification</span></div>
+      <div class="codeb"><span class="go">&lt;type&gt;</span><span class="tx">[optional scope]</span><span class="rd">[!]</span><span class="d">: &lt;description&gt;</span>
+
+<span class="d">[optional body]</span>
+
+<span class="d">[optional footer(s)]</span>
+
+<span class="cm">─────────────────────────────────────────────────────</span>
+
+<span class="cm"># Simple feature</span>
+<span class="go">feat</span><span class="d">: add dark mode toggle to settings page</span>
+
+<span class="cm"># Bug fix with scope</span>
+<span class="go">fix</span>(<span class="pu">auth</span>)<span class="d">: resolve null pointer when session expires</span>
+
+<span class="cm"># Breaking change (major version bump)</span>
+<span class="go">feat</span>(<span class="pu">api</span>)<span class="rd">!</span><span class="d">: rename /user endpoint to /account</span>
+
+<span class="go">BREAKING CHANGE</span><span class="d">: The /user endpoint has been renamed to /account.
+Update all API clients before upgrading.</span>
+
+<span class="cm"># Multi-line body</span>
+<span class="go">fix</span>(<span class="pu">payment</span>)<span class="d">: prevent double-charge on timeout</span>
+
+<span class="d">When a payment timed out, the webhook retry was not
+idempotent, causing a second charge. Added idempotency
+key to Stripe API call to prevent this.</span>
+
+<span class="d">Closes #247</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">commit types & version impact</div>
+    <div class="tbl"><table>
+      <tr><th>Type</th><th>Description</th><th>Version bump</th></tr>
+      <tr><td>feat</td><td>A new feature for the user</td><td>MINOR (1.x.0)</td></tr>
+      <tr><td>fix</td><td>A bug fix for the user</td><td>PATCH (1.0.x)</td></tr>
+      <tr><td>feat! / BREAKING CHANGE</td><td>Breaking API change</td><td>MAJOR (x.0.0)</td></tr>
+      <tr><td>docs</td><td>Documentation only</td><td>none</td></tr>
+      <tr><td>style</td><td>Formatting, whitespace (no logic change)</td><td>none</td></tr>
+      <tr><td>refactor</td><td>Code restructure, no new feature or fix</td><td>none</td></tr>
+      <tr><td>test</td><td>Adding or updating tests</td><td>none</td></tr>
+      <tr><td>chore</td><td>Build process, dependencies, tooling</td><td>none</td></tr>
+      <tr><td>perf</td><td>Performance improvement</td><td>PATCH</td></tr>
+      <tr><td>ci</td><td>CI/CD configuration changes</td><td>none</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">semantic-release — fully automated versioning</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">semantic-release GitHub Actions setup</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="cm"># Install semantic-release</span>
+<span class="or">$</span> <span class="bl">npm install</span> <span class="go">--save-dev</span> semantic-release
+
+<span class="cm"># .github/workflows/release.yml</span>
+<span class="go">name</span><span class="tx">:</span> Release
+<span class="go">on</span><span class="tx">:</span>
+  <span class="go">push</span><span class="tx">:</span>
+    <span class="go">branches</span><span class="tx">:</span> [main]
+
+<span class="go">jobs</span><span class="tx">:</span>
+  <span class="go">release</span><span class="tx">:</span>
+    <span class="go">runs-on</span><span class="tx">:</span> ubuntu-latest
+    <span class="go">steps</span><span class="tx">:</span>
+      <span class="tx">- </span><span class="go">uses</span><span class="tx">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="tx">- </span><span class="go">uses</span><span class="tx">:</span> <span class="pu">actions/setup-node@v4</span>
+      <span class="tx">- </span><span class="go">run</span><span class="tx">:</span> <span class="grn">npx semantic-release</span>
+        <span class="go">env</span><span class="tx">:</span>
+          <span class="go">GITHUB_TOKEN</span><span class="tx">:</span> <span class="grn">${{ secrets.GITHUB_TOKEN }}</span>
+          <span class="go">NPM_TOKEN</span><span class="tx">:</span> <span class="grn">${{ secrets.NPM_TOKEN }}</span>
+
+<span class="cm"># Result when you merge feat: commits → v1.1.0 auto-released
+# Result when you merge fix: commits → v1.0.1 auto-released
+# Result when you merge feat!: commits → v2.0.0 auto-released
+# CHANGELOG.md auto-generated. GitHub Release auto-created.</span></div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(4)">← Back</button>
+    <button class="btnp" onclick="nxt(4)">Next: First open source PR →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L5: Open Source ═══════════════════ -->
+<section class="sec" id="s5">
+  <div class="hero">
+    <div class="ey">Lesson 06 of 06 · Phase 5 — Expert & Open Source</div>
+    <h1>Your first <i>open source PR</i></h1>
+    <p>The capstone. Everything you've learned — branching, PRs, commits, rebasing — comes together in a real open source contribution. This is how careers are built and communities are formed.</p>
+    <div class="mr"><span class="mp go">~60 min</span><span class="mp or">capstone</span><span class="mp">career milestone</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">where to find your first contribution</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+      <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:11px;color:var(--go);margin-bottom:7px">🔍 finding issues</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--tx2)">
+          <li>→ <strong>goodfirstissue.dev</strong> — curated beginner issues</li>
+          <li>→ GitHub filter: <code>label:"good first issue"</code></li>
+          <li>→ <strong>up-for-grabs.net</strong> — community-maintained list</li>
+          <li>→ Projects you already use — you know the pain points</li>
+          <li>→ <strong>firstcontributions.github.io</strong> — practice repo</li>
+        </ul>
+      </div>
+      <div style="padding:12px 14px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:11px;color:var(--tl);margin-bottom:7px">✓ types of first contributions</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--tx2)">
+          <li>→ Fix a typo in docs (no code needed)</li>
+          <li>→ Improve error messages</li>
+          <li>→ Add a missing test case</li>
+          <li>→ Fix a small bug labeled "good first issue"</li>
+          <li>→ Translate documentation</li>
+          <li>→ Add code examples to docs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">the open source etiquette rules</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">before you submit — the checklist</span></div>
+      <div class="codeb"><span class="cm">Before opening a PR to any open source project:</span>
+
+<span class="grn">✓</span> Read the CONTRIBUTING.md file (every project has one)
+<span class="grn">✓</span> Read the CODE_OF_CONDUCT.md — understand community rules
+<span class="grn">✓</span> Check if there's already a PR for this issue
+<span class="grn">✓</span> Comment on the issue first: "I'd like to work on this"
+<span class="grn">✓</span> Fork the repo, don't work directly on the upstream
+<span class="grn">✓</span> Use a descriptive branch name (fix/typo-in-readme)
+<span class="grn">✓</span> Follow the project's coding style exactly
+<span class="grn">✓</span> Write tests if the project requires them
+<span class="grn">✓</span> Use Conventional Commits if the project uses them
+<span class="grn">✓</span> Keep the PR focused — one fix per PR
+<span class="grn">✓</span> Rebase onto upstream/main before submitting
+<span class="grn">✓</span> Write a clear PR description (what, why, how to test)
+<span class="grn">✓</span> Be patient — maintainers are volunteers. Wait ≥ 1 week.
+<span class="grn">✓</span> Respond politely to review feedback — don't argue style</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — submit your first real PR</div>
+    <div class="exc" id="e5-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e5-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Submit a PR to a real public repository</span>
+        <span class="ebadge hard">capstone</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Go to <strong>github.com/firstcontributions/first-contributions</strong> — a repo built for first PRs</li>
+          <li class="si2"><span class="sn2">2</span>Fork it. Clone your fork. Create branch <code>add-YOUR-NAME</code></li>
+          <li class="si2"><span class="sn2">3</span>Follow their CONTRIBUTING.md to add your name to Contributors.md</li>
+          <li class="si2"><span class="sn2">4</span>Use a Conventional Commit: <code>docs: add YOUR-NAME to contributors list</code></li>
+          <li class="si2"><span class="sn2">5</span>Push and open a PR. Write a proper description.</li>
+          <li class="si2"><span class="sn2">6</span>Once that's merged, find a real project you use. Search <code>label:"good first issue"</code></li>
+          <li class="si2"><span class="sn2">7</span>Comment on an issue. Fork. Fix. PR. Wait. Celebrate.</li>
+        </ul>
+        <div class="hint"><strong>Your GitHub profile tells your story.</strong> Every merged PR, every repo, every contribution graph square is visible to every recruiter and engineer who looks you up. Start building your public record today.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">🎉 phase 5 complete — you are now an expert</div>
+    <div class="cgrid">
+      <div class="ctick">✓ Git object model — DAG, blobs, trees, commits</div>
+      <div class="ctick">✓ reflog — recovering any lost work</div>
+      <div class="ctick">✓ bisect — binary search debugging</div>
+      <div class="ctick">✓ cherry-pick — transplanting commits</div>
+      <div class="ctick">✓ Submodules & subtrees</div>
+      <div class="ctick">✓ Git hooks + Husky</div>
+      <div class="ctick">✓ Conventional Commits + semantic-release</div>
+      <div class="ctick">✓ Open source contribution workflow</div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(5)">← Back</button>
+    <button class="btnp" onclick="go(6)">Objects Visualizer →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L6: Objects Visualizer ═══════════════════ -->
+<section class="sec" id="s6">
+  <div class="hero">
+    <div class="ey">Tool — Visual</div>
+    <h1>Git objects <i>visualizer</i></h1>
+    <p>See exactly how Git stores commit → tree → blob objects. Click any object to inspect its contents.</p>
+    <div class="mr"><span class="mp go">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="objviz">
+      <div class="objvizh">
+        <span class="objvizt">commit object graph</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="objbtn on" id="ob0" onclick="showObj(0)">commit</button>
+          <button class="objbtn" id="ob1" onclick="showObj(1)">tree</button>
+          <button class="objbtn" id="ob2" onclick="showObj(2)">blob</button>
+          <button class="objbtn" id="ob3" onclick="showObj(3)">tag</button>
+        </div>
+      </div>
+      <div class="objcanvas">
+        <svg id="objsvg" width="680" height="200" viewBox="0 0 680 200" style="max-width:100%"></svg>
+      </div>
+      <div class="objinfo" id="objinfo">Click a button above to see how that object type is stored internally.</div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="prv(6)">← Lessons</button>
+    <button class="btnp" onclick="go(7)">Bisect Simulator →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L7: Bisect Simulator ═══════════════════ -->
+<section class="sec" id="s7">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Bisect <i>simulator</i></h1>
+    <p>Practice git bisect interactively. You have 32 commits. The bug was introduced in one of them. Can you find it in ≤5 steps using binary search?</p>
+    <div class="mr"><span class="mp go">interactive</span><span class="mp">log₂(32) = 5 steps max</span></div>
+  </div>
+  <div class="cb">
+    <div class="bisect">
+      <div class="bisecth">
+        <div>
+          <div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em">bisect session</div>
+          <div style="font-size:12px;color:var(--tx2);margin-top:2px" id="bssteps">Steps taken: 0</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;color:var(--tx3)">Bug introduced at commit: <span id="bsanswr" style="color:var(--rd)">?</span></div>
+          <button class="bsbtn reset" onclick="resetBisect()" style="padding:5px 12px">↺ New game</button>
+        </div>
+      </div>
+      <div class="bisectlog" id="bslog">
+        <span style="color:var(--tx3)"># Welcome to the bisect simulator!</span>
+<span style="color:var(--tx3)"># The bug exists in one of 32 commits (1–32).</span>
+<span style="color:var(--tx3)"># Use binary search: mark each test commit as good or bad.</span>
+<span style="color:var(--go)">$ git bisect start</span>
+<span style="color:var(--go)">$ git bisect bad HEAD   (commit 32 is bad)</span>
+<span style="color:var(--go)">$ git bisect good HEAD~31  (commit 1 is good)</span>
+      </div>
+      <div class="bisectctrl">
+        <div style="font-size:12px;color:var(--tx2);flex:1;display:flex;align-items:center;gap:8px">
+          <span>Currently testing commit:</span>
+          <span id="bscur" style="color:var(--go);font-family:var(--mono)">commit 16</span>
+        </div>
+        <button class="bsbtn good" id="bsgoodbtn" onclick="bsGood()">✓ git bisect good</button>
+        <button class="bsbtn bad" id="bsbadbtn" onclick="bsBad()">✗ git bisect bad</button>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(6)">← Objects</button>
+    <button class="btnp" onclick="go(8)">Hooks Builder →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L8: Hooks Builder ═══════════════════ -->
+<section class="sec" id="s8">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Hooks <i>builder</i></h1>
+    <p>Click any hook type to see a ready-to-use script. Copy it into <code>.git/hooks/</code> and make it executable.</p>
+    <div class="mr"><span class="mp go">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="hookbox">
+      <div class="hookboxh">select a hook type</div>
+      <div class="hookgrid">
+        <div class="hookcard on" onclick="showHook(this,'pre-commit')">
+          <div class="hookcard-name">pre-commit</div>
+          <div class="hookcard-when">Runs before: git commit</div>
+          <div class="hookcard-desc">Lint, format, run fast tests before allowing commits</div>
+        </div>
+        <div class="hookcard" onclick="showHook(this,'commit-msg')">
+          <div class="hookcard-name">commit-msg</div>
+          <div class="hookcard-when">Runs during: git commit</div>
+          <div class="hookcard-desc">Validate commit message format (Conventional Commits)</div>
+        </div>
+        <div class="hookcard" onclick="showHook(this,'pre-push')">
+          <div class="hookcard-name">pre-push</div>
+          <div class="hookcard-when">Runs before: git push</div>
+          <div class="hookcard-desc">Run full test suite before allowing a push</div>
+        </div>
+        <div class="hookcard" onclick="showHook(this,'post-merge')">
+          <div class="hookcard-name">post-merge</div>
+          <div class="hookcard-when">Runs after: git merge / pull</div>
+          <div class="hookcard-desc">Auto-install dependencies after pulling new code</div>
+        </div>
+        <div class="hookcard" onclick="showHook(this,'prepare-commit-msg')">
+          <div class="hookcard-name">prepare-commit-msg</div>
+          <div class="hookcard-when">Runs before: commit editor</div>
+          <div class="hookcard-desc">Pre-fill commit message with branch name or ticket ID</div>
+        </div>
+        <div class="hookcard" onclick="showHook(this,'post-checkout')">
+          <div class="hookcard-name">post-checkout</div>
+          <div class="hookcard-when">Runs after: git switch/checkout</div>
+          <div class="hookcard-desc">Auto-run npm install when dependencies changed</div>
+        </div>
+      </div>
+      <div class="hookout" id="hookout">#!/bin/sh
+# pre-commit hook — runs npm lint before every commit
+# Exit 1 to abort the commit
+
+echo "Running lint..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ Lint failed. Fix errors and try again."
+  exit 1
+fi
+
+echo "✓ Lint passed"
+exit 0
+
+# Usage: chmod +x .git/hooks/pre-commit</div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(7)">← Bisect</button>
+    <button class="btnp" onclick="go(9)">Conventional Commits →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L9: Conventional Commits Builder ═══════════════════ -->
+<section class="sec" id="s9">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Conventional Commits <i>builder</i></h1>
+    <p>Fill in the form to generate a perfectly formatted Conventional Commit message. Copy it directly into your terminal.</p>
+    <div class="mr"><span class="mp go">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="ccbuilder">
+      <div class="ccbh">build your commit message</div>
+      <div class="ccform">
+        <label class="cclabel">type</label>
+        <select class="ccselect" id="cctype" onchange="buildCC()">
+          <option value="feat">feat — new feature</option>
+          <option value="fix">fix — bug fix</option>
+          <option value="docs">docs — documentation</option>
+          <option value="style">style — formatting</option>
+          <option value="refactor">refactor — code restructure</option>
+          <option value="test">test — adding tests</option>
+          <option value="chore">chore — maintenance</option>
+          <option value="perf">perf — performance</option>
+          <option value="ci">ci — CI/CD changes</option>
+          <option value="build">build — build system</option>
+        </select>
+        <label class="cclabel">scope</label>
+        <input class="ccinput" id="ccscope" placeholder="optional: auth, api, ui, payment…" oninput="buildCC()">
+        <label class="cclabel">breaking?</label>
+        <select class="ccselect" id="ccbreak" onchange="buildCC()">
+          <option value="">No breaking change</option>
+          <option value="!">Yes — breaking change (!)</option>
+        </select>
+        <label class="cclabel">description</label>
+        <input class="ccinput" id="ccdesc" placeholder="short imperative description (max 72 chars)" oninput="buildCC()">
+        <label class="cclabel">body</label>
+        <input class="ccinput" id="ccbody" placeholder="optional longer explanation" oninput="buildCC()">
+        <label class="cclabel">footer</label>
+        <input class="ccinput" id="ccfoot" placeholder="Closes #42 / BREAKING CHANGE: …" oninput="buildCC()">
+      </div>
+      <div class="ccpreview" id="ccpreview">
+        <span class="cc-type">feat</span>: <span class="cc-desc">your commit message will appear here</span>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(8)">← Hooks</button>
+    <button class="btnp" onclick="go(10)">OS Checklist →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L10: Open Source Checklist ═══════════════════ -->
+<section class="sec" id="s10">
+  <div class="hero">
+    <div class="ey">Tool — Checklist</div>
+    <h1>Open source <i>checklist</i></h1>
+    <p>Every step from finding a project to getting your PR merged. Check them off as you go.</p>
+    <div class="mr"><span class="mp go">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="oscl">
+      <div class="osclh"><span>Pre-contribution checklist</span><span class="oscl-pct" id="clpct">0%</span></div>
+      <div class="osclbar"><div class="osclfill" id="clfill"></div></div>
+      <div class="osclrows" id="clrows">
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Find a project</strong> — something you actually use or want to learn from</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Read CONTRIBUTING.md</strong> — every project has rules about PR format, testing, style</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Find a "good first issue"</strong> — filter issues by label or use goodfirstissue.dev</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Comment on the issue</strong> — "I'd like to work on this" — wait for maintainer's OK</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Fork the repository</strong> — click Fork on GitHub</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Clone your fork locally</strong> — <code>git clone git@github.com:YOU/repo.git</code></div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Add upstream remote</strong> — <code>git remote add upstream git@github.com:OWNER/repo.git</code></div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Create a feature branch</strong> — <code>git switch -c fix/issue-description</code></div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Make your change</strong> — follow the project's coding style exactly</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Write / update tests</strong> — if the project requires them</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Use Conventional Commits</strong> — if the project uses them (check their commit history)</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Sync with upstream</strong> — <code>git fetch upstream && git rebase upstream/main</code></div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Push to your fork</strong> — <code>git push -u origin fix/issue-description</code></div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Open a Pull Request</strong> — with a clear title and description following their template</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Link the issue</strong> — include "Closes #X" in the PR description</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>Respond to feedback</strong> — address review comments graciously</div></div>
+        <div class="osclrow" onclick="toggleCl(this)"><div class="osclcheck"><svg viewBox="0 0 10 10"><polyline points="1,5 3.5,8 9,2"/></svg></div><div class="oscl-text"><strong>PR merged! 🎉</strong> — sync your fork, delete the branch, celebrate</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(9)">← Commits builder</button>
+    <button class="btnp" onclick="go(11)">🏆 Completion →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════ L11: Completion ═══════════════════ -->
+<section class="sec" id="s11">
+  <div class="completion">
+    <div class="completion-icon">🏆</div>
+    <h2>You've mastered <i>Git & GitHub</i></h2>
+    <p>From <code>git init</code> to open source contributions — you've covered the complete 12-week journey. You now think in commits, branches, and pipelines.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
+      <span style="padding:5px 14px;border-radius:11px;font-size:12px;background:var(--go-s);border:0.5px solid var(--go-b);color:var(--go)">✓ Phase 1 Foundation</span>
+      <span style="padding:5px 14px;border-radius:11px;font-size:12px;background:var(--go-s);border:0.5px solid var(--go-b);color:var(--go)">✓ Phase 2 Branching</span>
+      <span style="padding:5px 14px;border-radius:11px;font-size:12px;background:var(--go-s);border:0.5px solid var(--go-b);color:var(--go)">✓ Phase 3 GitHub</span>
+      <span style="padding:5px 14px;border-radius:11px;font-size:12px;background:var(--go-s);border:0.5px solid var(--go-b);color:var(--go)">✓ Phase 4 CI/CD</span>
+      <span style="padding:5px 14px;border-radius:11px;font-size:12px;background:var(--go-s);border:0.5px solid var(--go-b);color:var(--go)">✓ Phase 5 Expert</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">complete git mastery reference — all 5 phases</div>
+    <div class="tbl"><table>
+      <tr><th>Command</th><th>Phase</th></tr>
+      <tr><td>git init / git clone</td><td>Phase 1 — start a repo</td></tr>
+      <tr><td>git add / git commit / git status</td><td>Phase 1 — daily workflow</td></tr>
+      <tr><td>git log / git diff / .gitignore</td><td>Phase 1 — history & ignoring</td></tr>
+      <tr><td>git switch -c / git branch / git merge</td><td>Phase 2 — branching</td></tr>
+      <tr><td>git rebase -i / git stash</td><td>Phase 2 — advanced branching</td></tr>
+      <tr><td>git push / git pull / git fetch</td><td>Phase 3 — remotes</td></tr>
+      <tr><td>gh pr create / gh issue list</td><td>Phase 3 — GitHub CLI</td></tr>
+      <tr><td>.github/workflows/*.yml</td><td>Phase 4 — GitHub Actions</td></tr>
+      <tr><td>on: push/pull_request/schedule</td><td>Phase 4 — triggers</td></tr>
+      <tr><td>secrets.${{ secrets.NAME }}</td><td>Phase 4 — secrets</td></tr>
+      <tr><td>git cat-file -p / git reflog</td><td>Phase 5 — internals</td></tr>
+      <tr><td>git bisect start/good/bad</td><td>Phase 5 — debugging</td></tr>
+      <tr><td>git cherry-pick / git worktree</td><td>Phase 5 — power tools</td></tr>
+      <tr><td>.git/hooks/pre-commit (husky)</td><td>Phase 5 — hooks</td></tr>
+      <tr><td>feat: / fix: / BREAKING CHANGE:</td><td>Phase 5 — Conventional Commits</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">what to do next</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="padding:13px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--go);margin-bottom:6px">📚 Keep learning</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--tx2)">
+          <li>→ Pro Git book — git-scm.com/book (free)</li>
+          <li>→ learngitbranching.js.org</li>
+          <li>→ GitHub Skills — skills.github.com</li>
+          <li>→ Atlassian Git tutorials</li>
+        </ul>
+      </div>
+      <div style="padding:13px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--tl);margin-bottom:6px">🌍 Contribute</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--tx2)">
+          <li>→ goodfirstissue.dev</li>
+          <li>→ up-for-grabs.net</li>
+          <li>→ Hacktoberfest (every October)</li>
+          <li>→ Google Summer of Code</li>
+        </ul>
+      </div>
+      <div style="padding:13px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--pu);margin-bottom:6px">🛠 Build things</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--tx2)">
+          <li>→ Build a full CI/CD pipeline for your project</li>
+          <li>→ Set up semantic-release automation</li>
+          <li>→ Create your own GitHub Action</li>
+          <li>→ Write a git hook in Python or Go</li>
+        </ul>
+      </div>
+      <div style="padding:13px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--or);margin-bottom:6px">📊 Track progress</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--tx2)">
+          <li>→ Daily commits — build your streak</li>
+          <li>→ Aim for 3 merged OSS PRs this month</li>
+          <li>→ Star and watch repos in your stack</li>
+          <li>→ Write a blog post about what you learned</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="go(10)">← Checklist</button>
+    <span style="font-size:12px;color:var(--tx3)">git mastery complete 🏆</span>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ── NAV ── */
+let cur=0;const total=6;const doneSet=new Set();
+function go(n){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));document.getElementById('s'+n).classList.add('on');const nb=document.getElementById('n'+n);if(nb)nb.classList.add('on');cur=n;window.scrollTo({top:0,behavior:'smooth'});if(n===6)setTimeout(initObj,100);}
+function nxt(n){doneSet.add(n);document.getElementById('n'+n).classList.add('dn');upProg();go(n+1);}
+function prv(n){go(n-1);}
+function upProg(){const p=Math.round((doneSet.size/total)*100);document.getElementById('gp').style.width=p+'%';document.getElementById('spf').style.width=p+'%';document.getElementById('ptxt').textContent=doneSet.size+' / '+total;}
+
+/* ── EXERCISE ── */
+function tog(h){const b=h.nextElementSibling;const o=b.classList.contains('open');b.classList.toggle('open',!o);h.setAttribute('aria-expanded',!o);}
+function mkdn(e,id){e.stopPropagation();document.getElementById(id).classList.toggle('dn');}
+
+/* ── COPY ── */
+function cp(btn){const text=btn.closest('.code').querySelector('.codeb').innerText;navigator.clipboard.writeText(text.replace(/^\$ /gm,'').trim()).then(()=>{btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1600);});}
+
+/* ── QUIZ ── */
+function quiz(btn,r,qid){btn.closest('.qo').querySelectorAll('.qb').forEach(b=>b.disabled=true);btn.classList.add(r);const fb=document.getElementById(qid+'-fb');fb.classList.add('show');const msgs={q0:{ok:'Correct! A branch is literally a 41-byte file in .git/refs/heads/ containing a SHA-1 hash. That\'s why creating branches is instant — there\'s nothing to copy.',no:'Git branches are famously lightweight. They\'re just text files containing a commit hash. No files are copied, no archives created.'}};if(r==='correct'){fb.classList.add('ok');fb.textContent='✓ '+(msgs[qid]?.ok||'');}else{fb.classList.add('no');fb.textContent='✗ '+(msgs[qid]?.no||'');btn.closest('.qo').querySelectorAll('.qb').forEach(b=>{if(b.getAttribute('onclick')?.includes("'correct'"))b.classList.add('ok');});}}
+
+/* ── OBJECT VISUALIZER ── */
+const objData=[
+  {label:'commit',info:'A commit object stores: tree hash (root snapshot), parent hash(es), author, committer, timestamp, and message. It\'s the "record" of your git commit command.',draw(svg){
+    box(svg,80,80,'#4a90d9','COMMIT','4f2a1b3');box(svg,280,40,'#2dba6e','TREE','8d3c5a1');box(svg,280,130,'#f59e0b','PARENT','d8c3f91');
+    arr(svg,160,80,280,55);arr(svg,160,88,280,145);
+    txt(svg,200,65,'tree');txt(svg,200,120,'parent');
+  }},
+  {label:'tree',info:'A tree object is a snapshot of a directory. It lists names of files/dirs alongside their blob or tree hashes and permissions. Like an inode or folder listing.',draw(svg){
+    box(svg,60,100,'#2dba6e','TREE','8d3c5a1');box(svg,280,40,'#f59e0b','BLOB','.gitignore');box(svg,280,100,'#f59e0b','BLOB','README.md');box(svg,280,160,'#2dba6e','TREE','src/');
+    arr(svg,140,95,280,55);arr(svg,140,100,280,108);arr(svg,140,108,280,165);
+    txt(svg,190,78,'100644');txt(svg,190,104,'100644');txt(svg,190,128,'040000');
+  }},
+  {label:'blob',info:'A blob stores raw file contents — nothing else. No filename, no permissions, no path. Two identical files in different paths share one blob. Storage is deduped automatically.',draw(svg){
+    box(svg,100,90,'#f59e0b','BLOB','a8f3b2c');const t=document.createElementNS('http://www.w3.org/2000/svg','foreignObject');t.setAttribute('x',250);t.setAttribute('y',50);t.setAttribute('width',320);t.setAttribute('height',110);t.innerHTML='<div xmlns="http://www.w3.org/1999/xhtml" style="background:#0d1018;border:0.5px solid rgba(255,215,0,.25);border-radius:8px;padding:10px 14px;font-family:JetBrains Mono,monospace;font-size:11px;color:#8b939e;line-height:1.7">node_modules/<br>.env<br>dist/<br># Editor<br>.vscode/</div>';svg.appendChild(t);arr(svg,180,100,248,100);txt(svg,210,94,'file');txt(svg,210,108,'contents');
+  }},
+  {label:'tag',info:'An annotated tag object stores: the object it points to (usually a commit), the tagger\'s identity, timestamp, and tag message. Unlike lightweight tags, this is a real Git object with its own hash.',draw(svg){
+    box(svg,60,90,'#f77','TAG','v2.0.0');box(svg,260,90,'#4a90d9','COMMIT','4f2a1b3');box(svg,460,90,'#2dba6e','TREE','8d3c5a1');
+    arr(svg,140,100,258,100);arr(svg,340,100,458,100);
+    txt(svg,190,88,'points to');txt(svg,390,88,'tree');
+  }},
+];
+function box(svg,x,y,color,type,hash){const g=document.createElementNS('http://www.w3.org/2000/svg','g');const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y-28);r.setAttribute('width',80);r.setAttribute('height',52);r.setAttribute('rx',8);r.setAttribute('fill',color+'22');r.setAttribute('stroke',color);r.setAttribute('stroke-width','1.5');g.appendChild(r);const t1=document.createElementNS('http://www.w3.org/2000/svg','text');t1.setAttribute('x',x+40);t1.setAttribute('y',y-8);t1.setAttribute('text-anchor','middle');t1.setAttribute('font-family','JetBrains Mono,monospace');t1.setAttribute('font-size','10');t1.setAttribute('font-weight','500');t1.setAttribute('fill',color);t1.textContent=type;g.appendChild(t1);const t2=document.createElementNS('http://www.w3.org/2000/svg','text');t2.setAttribute('x',x+40);t2.setAttribute('y',y+10);t2.setAttribute('text-anchor','middle');t2.setAttribute('font-family','JetBrains Mono,monospace');t2.setAttribute('font-size','9');t2.setAttribute('fill','rgba(255,255,255,0.3)');t2.textContent=hash;g.appendChild(t2);svg.appendChild(g);}
+function arr(svg,x1,y1,x2,y2){const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke','rgba(255,255,255,0.15)');l.setAttribute('stroke-width','1');l.setAttribute('marker-end','url(#arrowhead)');svg.appendChild(l);}
+function txt(svg,x,y,s){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor','middle');t.setAttribute('font-family','JetBrains Mono,monospace');t.setAttribute('font-size','9');t.setAttribute('fill','rgba(255,255,255,0.25)');t.textContent=s;svg.appendChild(t);}
+function initObj(){showObj(0);}
+function showObj(n){
+  document.querySelectorAll('[id^="ob"]').forEach((b,i)=>b.classList.toggle('on',i===n));
+  const svg=document.getElementById('objsvg');if(!svg)return;svg.innerHTML='';
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');defs.innerHTML='<marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="rgba(255,255,255,0.15)"/></marker>';
+  svg.appendChild(defs);objData[n].draw(svg);
+  document.getElementById('objinfo').textContent=objData[n].info;
+}
+
+/* ── BISECT SIMULATOR ── */
+let bsLow=1,bsHigh=32,bsCur=16,bsAnswer,bsSteps=0,bsDone=false;
+function initBisect(){bsLow=1;bsHigh=32;bsCur=16;bsSteps=0;bsDone=false;bsAnswer=Math.floor(Math.random()*32)+1;document.getElementById('bsanswr').textContent='?';document.getElementById('bssteps').textContent='Steps taken: 0';document.getElementById('bscur').textContent='commit '+bsCur;document.getElementById('bsgoodbtn').disabled=false;document.getElementById('bsbadbtn').disabled=false;document.getElementById('bslog').innerHTML=`<span style="color:var(--tx3)"># Bug in commits 1–32. Bad = bug present. Good = no bug.</span>
+<span style="color:var(--go)">$ git bisect start</span>
+<span style="color:var(--go)">$ git bisect bad HEAD   (commit 32 — has the bug)</span>
+<span style="color:var(--go)">$ git bisect good v0   (commit 1 — known good)</span>
+<span style="color:var(--tx2)">Bisecting: ${Math.floor((bsHigh-bsLow)/2)} revisions left (≈${Math.ceil(Math.log2(32-1))} steps)</span>`;}
+function bsLog(msg,col='var(--tx2)'){const l=document.getElementById('bslog');const d=document.createElement('div');d.style.color=col;d.textContent=msg;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+function bsGood(){if(bsDone)return;bsSteps++;bsLog(`$ git bisect good  (commit ${bsCur} has NO bug)`,'var(--grn)');bsLow=bsCur+1;nextBs();}
+function bsBad(){if(bsDone)return;bsSteps++;bsLog(`$ git bisect bad  (commit ${bsCur} HAS the bug)`,'var(--rd)');bsHigh=bsCur;nextBs();}
+function nextBs(){
+  document.getElementById('bssteps').textContent='Steps taken: '+bsSteps;
+  if(bsLow>=bsHigh){
+    bsDone=true;
+    document.getElementById('bsanswr').textContent=bsLow;
+    bsLog(`\n🎯 Found it! Commit ${bsLow} introduced the bug.`,'var(--go)');
+    bsLog(`The actual answer was: ${bsAnswer}. ${bsLow===bsAnswer?'✓ Correct!':'(different game instance)'}`,'var(--go)');
+    bsLog(`git bisect reset`,'var(--go)');
+    document.getElementById('bsgoodbtn').disabled=true;
+    document.getElementById('bsbadbtn').disabled=true;
+    return;
+  }
+  bsCur=Math.floor((bsLow+bsHigh)/2);
+  document.getElementById('bscur').textContent='commit '+bsCur;
+  const rem=Math.ceil(Math.log2(bsHigh-bsLow+1));
+  bsLog(`Bisecting: ${bsHigh-bsLow} revisions left (≈${rem} more step${rem===1?'':'s'}). Testing commit ${bsCur}...`);
+}
+function resetBisect(){initBisect();}
+
+/* ── HOOKS BUILDER ── */
+const hookScripts={
+  'pre-commit':`#!/bin/sh
+# pre-commit hook — runs lint before every commit
+echo "Running lint..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ Lint failed. Fix errors before committing."
+  exit 1
+fi
+
+echo "✓ Lint passed"
+exit 0
+
+# Usage: chmod +x .git/hooks/pre-commit`,
+  'commit-msg':`#!/bin/sh
+# commit-msg hook — enforce Conventional Commits format
+# File containing the message is passed as $1
+
+commit_msg=$(cat "$1")
+pattern="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?(!)?: .{1,72}"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Commit message doesn't follow Conventional Commits."
+  echo "   Format: type(scope): description"
+  echo "   Example: feat(auth): add OAuth2 login"
+  exit 1
+fi
+
+echo "✓ Commit message format OK"
+exit 0`,
+  'pre-push':`#!/bin/sh
+# pre-push hook — run full test suite before push
+echo "Running tests before push..."
+npm test
+
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Fix before pushing."
+  exit 1
+fi
+
+echo "✓ All tests passed"
+exit 0`,
+  'post-merge':`#!/bin/sh
+# post-merge hook — install deps if package.json changed
+CHANGED=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD)
+check_run() {
+  echo "$CHANGED" | grep -q "$1" && eval "$2"
+}
+
+check_run package-lock.json "echo 'package.json changed, running npm ci...' && npm ci"
+echo "✓ Dependencies up to date"`,
+  'prepare-commit-msg':`#!/bin/sh
+# prepare-commit-msg — prefix commit with branch ticket ID
+# Extracts PROJ-123 from branch names like feature/PROJ-123-my-feature
+
+BRANCH=$(git symbolic-ref --short HEAD)
+TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+')
+
+if [ -n "$TICKET" ]; then
+  sed -i.bak "1s/^/$TICKET: /" "$1"
+fi`,
+  'post-checkout':`#!/bin/sh
+# post-checkout hook — auto npm install if deps changed
+# Called with: $1=prev HEAD, $2=new HEAD, $3=is branch checkout
+
+if [ "$3" = "1" ]; then
+  CHANGED=$(git diff --name-only "$1" "$2" -- package-lock.json)
+  if [ -n "$CHANGED" ]; then
+    echo "Dependencies changed, running npm ci..."
+    npm ci
+  fi
+fi`};
+function showHook(el,name){document.querySelectorAll('.hookcard').forEach(c=>c.classList.remove('on'));el.classList.add('on');document.getElementById('hookout').textContent=hookScripts[name]||'';}
+
+/* ── CONVENTIONAL COMMITS BUILDER ── */
+function buildCC(){
+  const type=document.getElementById('cctype').value;
+  const scope=document.getElementById('ccscope').value.trim();
+  const brk=document.getElementById('ccbreak').value;
+  const desc=document.getElementById('ccdesc').value.trim();
+  const body=document.getElementById('ccbody').value.trim();
+  const foot=document.getElementById('ccfoot').value.trim();
+  const scopeStr=scope?`(<span class="cc-scope">${scope}</span>)`:'';
+  const brkStr=brk?`<span class="cc-breaking">!</span>`:'';
+  const descStr=desc||'<span style="color:var(--tx3)">short description here…</span>';
+  let html=`<span class="cc-type">${type}</span>${scopeStr}${brkStr}: <span class="cc-desc">${descStr}</span>`;
+  if(body)html+=`\n\n<span class="d">${body}</span>`;
+  if(foot)html+=`\n\n<span style="color:var(--tl)">${foot}</span>`;
+  if(brk)html+=`\n\n<span class="cc-breaking">BREAKING CHANGE: </span><span class="d">Describe the breaking change here.</span>`;
+  document.getElementById('ccpreview').innerHTML=html;
+}
+
+/* ── OPEN SOURCE CHECKLIST ── */
+function toggleCl(row){row.classList.toggle('checked');updateClProgress();}
+function updateClProgress(){
+  const rows=document.querySelectorAll('.osclrow');const total=rows.length;const checked=document.querySelectorAll('.osclrow.checked').length;const pct=Math.round((checked/total)*100);
+  document.getElementById('clpct').textContent=pct+'%';
+  document.getElementById('clfill').style.width=pct+'%';
+}
+
+/* ── INIT ── */
+initBisect();buildCC();
+</script>
+</body>
+</html>

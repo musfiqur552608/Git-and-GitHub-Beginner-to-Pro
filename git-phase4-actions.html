@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Phase 4 — GitHub Actions & CI/CD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b10;--bg2:#0d1018;--bg3:#131820;--bg4:#1a2030;
+  --bd:rgba(255,255,255,0.055);--bd2:rgba(255,255,255,0.1);
+  --tx:#d0d8e8;--tx2:#7a8898;--tx3:#3a4455;
+  --gr:#00d084;--gr-s:rgba(0,208,132,0.1);--gr-b:rgba(0,208,132,0.22);
+  --sky:#38bdf8;--sky-s:rgba(56,189,248,0.1);--sky-b:rgba(56,189,248,0.2);
+  --or:#f59e0b;--or-s:rgba(245,158,11,0.1);--or-b:rgba(245,158,11,0.2);
+  --red:#f87171;--red-s:rgba(248,113,113,0.1);--red-b:rgba(248,113,113,0.2);
+  --pu:#a78bfa;--pu-s:rgba(167,139,250,0.1);--pu-b:rgba(167,139,250,0.2);
+  --pk:#f472b6;--pk-s:rgba(244,114,182,0.1);
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Cabinet Grotesk','Inter',sans-serif;
+  --sw:272px;--hh:56px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);font-size:14px;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── HEADER ── */
+header{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--hh);background:rgba(8,11,16,0.96);backdrop-filter:blur(20px);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;padding:0 1.5rem;gap:12px}
+.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.hico{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--gr),var(--sky));display:flex;align-items:center;justify-content:center;font-size:15px}
+.hname{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--tx)}.hname em{color:var(--gr);font-style:normal}
+.hfill{flex:1}
+.hbadge{font-size:10px;padding:3px 11px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx3)}
+.hbadge.on{background:var(--gr-s);border-color:var(--gr-b);color:var(--gr)}
+.hpwrap{position:fixed;top:var(--hh);left:0;right:0;z-index:199;height:2px;background:var(--bd)}
+.hpfill{height:100%;background:linear-gradient(90deg,var(--gr),var(--sky));width:0%;transition:width .35s}
+
+/* ── LAYOUT ── */
+.layout{display:flex;padding-top:calc(var(--hh)+2px);min-height:100vh}
+
+/* ── SIDEBAR ── */
+aside{width:var(--sw);flex-shrink:0;position:fixed;top:calc(var(--hh)+2px);left:0;bottom:0;overflow-y:auto;border-right:0.5px solid var(--bd);background:var(--bg);padding:1.25rem 0 3rem}
+.sg{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);padding:0 1.25rem;margin-bottom:4px;margin-top:6px}
+.si{display:flex;align-items:center;gap:9px;padding:7px 10px;margin:0 8px;border-radius:7px;cursor:pointer;color:var(--tx2);font-size:12px;border:none;background:transparent;width:calc(100% - 16px);text-align:left;transition:all .12s}
+.si:hover{background:var(--bg3);color:var(--tx)}
+.si.on{background:var(--gr-s);color:var(--gr)}
+.si.dn{color:var(--gr)}
+.sn{width:22px;height:22px;border-radius:5px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tx3);flex-shrink:0;transition:all .12s}
+.si.on .sn{background:var(--gr-s);color:var(--gr)}
+.si.dn .sn{background:var(--gr-s);color:var(--gr)}
+.spbox{margin:1.25rem 1rem 0;padding:12px 14px;background:var(--bg3);border:0.5px solid var(--bd);border-radius:10px}
+.sprow{font-size:10px;color:var(--tx3);display:flex;justify-content:space-between;margin-bottom:5px}
+.spbar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.spfill{height:100%;background:linear-gradient(90deg,var(--gr),var(--sky));border-radius:2px;transition:width .4s;width:0%}
+
+/* ── MAIN ── */
+main{margin-left:var(--sw);flex:1;max-width:920px;padding:2.5rem 2.5rem 5rem}
+.sec{display:none;animation:fi .2s ease}.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{background:var(--bg2);border:0.5px solid var(--bd);border-radius:16px;padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(0,208,132,.07),transparent 70%);pointer-events:none}
+.ey{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gr);margin-bottom:.5rem}
+.hero h1{font-family:var(--sans);font-size:28px;font-weight:800;line-height:1.18;color:var(--tx);margin-bottom:.65rem}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--gr),var(--sky));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:13px;color:var(--tx2);line-height:1.75;max-width:580px}
+.mr{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.mp{font-size:11px;padding:3px 12px;border-radius:11px;border:0.5px solid var(--bd);color:var(--tx2)}
+.mp.gr{border-color:var(--gr-b);color:var(--gr);background:var(--gr-s)}
+.mp.sk{border-color:var(--sky-b);color:var(--sky);background:var(--sky-s)}
+
+/* ── CONTENT ── */
+.cb{margin-bottom:1.85rem}
+.ct{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
+.ct::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.prose{font-size:13px;color:var(--tx2);line-height:1.8;margin-bottom:.8rem}
+.prose strong{color:var(--tx);font-weight:500}
+.prose code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:0.5px solid var(--bd);padding:1px 6px;border-radius:4px;color:var(--gr)}
+
+/* ── CODE ── */
+.code{background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.codeh{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bd)}
+.cdd{display:flex;gap:5px}.cd{width:10px;height:10px;border-radius:50%}
+.cfn{font-size:11px;color:var(--tx3);flex:1}
+.ccp{font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:4px;transition:all .12s;font-family:var(--mono)}
+.ccp:hover{background:var(--bg4);color:var(--tx2)}
+.codeb{padding:.9rem 1.2rem;font-family:var(--mono);font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre}
+/* syntax tokens */
+.y{color:var(--or)} .k{color:var(--sky)} .g{color:var(--gr)} .r{color:var(--red)}
+.p{color:var(--pk)} .pu{color:var(--pu)} .c{color:var(--tx3);font-style:italic}
+.t{color:var(--tx)} .d{color:var(--tx2)} .w{color:#fff}
+
+/* ── NOTE ── */
+.note{padding:10px 15px;border-radius:8px;margin-bottom:.8rem;font-size:12px;line-height:1.7;display:flex;gap:10px;border:0.5px solid}
+.note i{font-size:14px;flex-shrink:0;font-style:normal}
+.note b{color:var(--tx);font-weight:500}
+.note.tip{background:var(--sky-s);border-color:var(--sky-b);color:var(--tx2)}
+.note.warn{background:var(--or-s);border-color:var(--or-b);color:var(--tx2)}
+.note.ok{background:var(--gr-s);border-color:var(--gr-b);color:var(--tx2)}
+.note.danger{background:var(--red-s);border-color:var(--red-b);color:var(--tx2)}
+.note.pu{background:var(--pu-s);border-color:var(--pu-b);color:var(--tx2)}
+
+/* ── TABLE ── */
+.tbl{border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{padding:7px 13px;text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);background:var(--bg3);border-bottom:0.5px solid var(--bd);font-weight:400}
+.tbl td{padding:8px 13px;font-size:12px;border-bottom:0.5px solid var(--bd);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.tbl td:first-child{font-family:var(--mono);color:var(--gr);width:40%;white-space:nowrap}
+.tbl td:last-child{color:var(--tx2)}
+
+/* ── EXERCISE ── */
+.exc{border:0.5px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:.8rem;transition:border-color .15s}
+.exc:hover{border-color:var(--bd2)}.exc.dn{border-color:var(--gr-b)}
+.exh{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--bg2);border-bottom:0.5px solid var(--bd);cursor:pointer}
+.ck{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;cursor:pointer}
+.ck svg{width:12px;height:12px;stroke:white;stroke-width:2.5;fill:none;opacity:0;transition:opacity .15s}
+.exc.dn .ck{background:var(--gr);border-color:var(--gr)}.exc.dn .ck svg{opacity:1}
+.etitle{font-size:13px;font-weight:500;color:var(--tx);flex:1}
+.ebadge{font-size:10px;padding:2px 8px;border-radius:9px;border:0.5px solid}
+.easy{border-color:var(--gr-b);color:var(--gr);background:var(--gr-s)}
+.med{border-color:var(--or-b);color:var(--or);background:var(--or-s)}
+.hard{border-color:var(--red-b);color:var(--red);background:var(--red-s)}
+.etog{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.etog svg{width:12px;height:12px;stroke:var(--tx3);fill:none;transition:transform .15s}
+.exh[aria-expanded="true"] .etog svg{transform:rotate(180deg)}
+.exb{padding:1rem 1.2rem;background:var(--bg2);display:none}.exb.open{display:block}
+.sl{list-style:none;display:flex;flex-direction:column;gap:7px}
+.si2{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--tx2);line-height:1.5}
+.sn2{width:20px;height:20px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--bd);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--tx3);flex-shrink:0;margin-top:1px}
+.hint{margin-top:.7rem;padding:9px 13px;background:var(--sky-s);border:0.5px solid var(--sky-b);border-radius:7px;font-size:12px;color:var(--tx2);line-height:1.6}
+.hint strong{color:var(--sky)}
+
+/* ── QUIZ ── */
+.qc{border:0.5px solid var(--bd);border-radius:10px;background:var(--bg2);padding:1.35rem;margin-bottom:.8rem}
+.qq{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:.8rem}
+.qo{display:flex;flex-direction:column;gap:5px}
+.qb{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;border:0.5px solid var(--bd);border-radius:7px;cursor:pointer;font-size:12px;color:var(--tx2);background:var(--bg3);transition:all .12s;text-align:left;font-family:var(--mono);width:100%}
+.qb:hover{border-color:var(--bd2);color:var(--tx)}
+.qb.ok{border-color:var(--gr-b);background:var(--gr-s);color:var(--gr)}
+.qb.no{border-color:var(--red-b);background:var(--red-s);color:var(--red)}
+.qfb{margin-top:.6rem;padding:9px 13px;border-radius:7px;font-size:12px;color:var(--tx2);display:none;border:0.5px solid}
+.qfb.show{display:block}
+.qfb.ok{background:var(--gr-s);border-color:var(--gr-b);color:var(--gr)}
+.qfb.no{background:var(--red-s);border-color:var(--red-b);color:var(--red)}
+
+/* ── YAML BUILDER ── */
+.ybuilder{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.ybh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.ybtitle{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.ybopts{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--bg2)}
+.ybpane{padding:1rem;border-right:0.5px solid var(--bd)}
+.ybpane:last-child{border-right:none}
+.ybsec{margin-bottom:.85rem}
+.ybsec-title{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.ybchips{display:flex;flex-wrap:wrap;gap:5px}
+.ybchip{font-size:11px;padding:4px 10px;border-radius:6px;border:0.5px solid var(--bd);background:var(--bg3);color:var(--tx2);cursor:pointer;transition:all .12s;font-family:var(--mono)}
+.ybchip:hover{border-color:var(--bd2);color:var(--tx)}
+.ybchip.sel{background:var(--gr-s);border-color:var(--gr-b);color:var(--gr)}
+.ybout{background:#050709;border-top:0.5px solid var(--bd);padding:1rem 1.2rem;font-family:var(--mono);font-size:12px;line-height:1.85;min-height:200px;color:var(--tx2);white-space:pre;overflow-x:auto}
+
+/* ── PIPELINE SIMULATOR ── */
+.pipeline{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.plh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.plhinfo{font-size:11px;color:var(--tx3)}
+.plrun{font-size:11px;padding:6px 16px;border-radius:6px;background:var(--gr);color:var(--bg);border:none;cursor:pointer;font-family:var(--mono);font-weight:500;transition:all .13s}
+.plrun:hover{filter:brightness(1.1)}
+.plrun:disabled{background:var(--bg4);color:var(--tx3);cursor:not-allowed}
+.plstages{display:flex;align-items:center;padding:1.25rem 1rem;background:var(--bg2);gap:0;overflow-x:auto}
+.plstage{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.plsicon{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;transition:all .3s;background:var(--bg3)}
+.plsicon.running{border-color:var(--sky);animation:pulse 1s infinite}
+.plsicon.ok{border-color:var(--gr);background:var(--gr-s)}
+.plsicon.fail{border-color:var(--red);background:var(--red-s)}
+.plsname{font-size:10px;color:var(--tx3);font-family:var(--mono);white-space:nowrap}
+.plstime{font-size:10px;color:var(--tx3)}
+.plasep{width:32px;height:1px;background:var(--bd2);flex-shrink:0;margin:0 4px;position:relative;top:-10px}
+.plasep.active{background:var(--gr)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.3)}50%{box-shadow:0 0 0 6px rgba(56,189,248,.0)}}
+.pllog{background:#030507;border-top:0.5px solid var(--bd);padding:.85rem 1.2rem;font-family:var(--mono);font-size:11.5px;line-height:1.75;height:180px;overflow-y:auto;color:var(--tx2)}
+
+/* ── ACTIONS MARKETPLACE ── */
+.marketplace{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1rem}
+.mcard{background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px;padding:12px 14px;transition:border-color .15s;cursor:pointer}
+.mcard:hover{border-color:var(--bd2)}
+.mcard-icon{font-size:20px;margin-bottom:7px}
+.mcard-name{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.mcard-desc{font-size:11px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
+.mcard-uses{font-size:10px;color:var(--tx3);font-family:var(--mono)}
+.mcard-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--gr-s);border:0.5px solid var(--gr-b);color:var(--gr);margin-bottom:5px}
+
+/* ── SECRETS UI ── */
+.secbox{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.secboxh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.secrows{display:flex;flex-direction:column}
+.secrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid var(--bd);font-size:12px}
+.secrow:last-child{border-bottom:none}
+.secrow:hover{background:var(--bg3)}
+.sec-name{font-family:var(--mono);color:var(--or);flex:1}
+.sec-val{font-family:var(--mono);font-size:11px;color:var(--tx3);flex:1;letter-spacing:.08em}
+.sec-date{font-size:11px;color:var(--tx3)}
+.sec-del{font-size:11px;color:var(--tx3);cursor:pointer;padding:2px 8px;border-radius:4px;border:0.5px solid var(--bd);transition:all .12s;background:none;font-family:var(--mono)}
+.sec-del:hover{border-color:var(--red-b);color:var(--red)}
+.secadd{display:flex;gap:8px;padding:10px 14px;background:var(--bg2);border-top:0.5px solid var(--bd)}
+.secinput{flex:1;background:var(--bg3);border:0.5px solid var(--bd);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:12px;color:var(--tx);outline:none;transition:border-color .12s}
+.secinput:focus{border-color:var(--gr-b)}
+.secadd-btn{font-size:11px;padding:6px 14px;border-radius:6px;background:var(--gr-s);border:0.5px solid var(--gr-b);color:var(--gr);cursor:pointer;font-family:var(--mono);transition:all .12s}
+.secadd-btn:hover{background:var(--gr);color:var(--bg)}
+
+/* ── MATRIX BUILD ── */
+.matrix-viz{border:0.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.mxh{padding:10px 16px;background:var(--bg3);border-bottom:0.5px solid var(--bd);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.mxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:1rem;background:var(--bg2)}
+.mxcell{padding:10px 12px;border:0.5px solid var(--bd);border-radius:8px;background:var(--bg3);text-align:center;cursor:pointer;transition:all .2s}
+.mxcell:hover{border-color:var(--bd2)}
+.mxcell.ok{border-color:var(--gr-b);background:var(--gr-s)}
+.mxcell.fail{border-color:var(--red-b);background:var(--red-s)}
+.mxcell.run{border-color:var(--sky-b);animation:pulse 1s infinite}
+.mxcell-os{font-size:13px;margin-bottom:3px}
+.mxcell-ver{font-size:11px;color:var(--tx2);font-family:var(--mono)}
+.mxcell-st{font-size:10px;font-family:var(--mono);margin-top:5px}
+
+/* ── NAV ── */
+.lnav{display:flex;justify-content:space-between;align-items:center;margin-top:2.5rem;padding-top:1.5rem;border-top:0.5px solid var(--bd)}
+.btnp{padding:10px 22px;background:var(--gr);color:var(--bg);border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:all .13s;display:flex;align-items:center;gap:7px}
+.btnp:hover{filter:brightness(1.1);transform:translateX(2px)}
+.btns{padding:10px 18px;background:var(--bg3);color:var(--tx2);border:0.5px solid var(--bd);border-radius:7px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .13s}
+.btns:hover{background:var(--bg4);color:var(--tx)}
+
+/* ── COMPLETION ── */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ctick{padding:9px 13px;background:var(--gr-s);border:0.5px solid var(--gr-b);border-radius:7px;font-size:12px;color:var(--gr)}
+
+/* Shared shell */
+:root{
+  --bg:#0b0f14;--bg2:#111823;--bg3:#171f2d;--bg4:#1f293a;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#e5e9f0;--text2:#a0a9b8;--text3:#6b7486;
+  --accent:#2dd4bf;--accent-soft:rgba(45,212,191,0.16);
+  --or:var(--accent);--or-s:var(--accent-soft);--or-b:rgba(45,212,191,0.28);
+  --or2:#55e0cb;--or-soft:var(--accent-soft);--or-glow:rgba(45,212,191,0.12);
+  --blue:var(--accent);--blue-s:var(--accent-soft);--blue-b:rgba(45,212,191,0.28);
+  --purple:#60a5fa;--purple-s:rgba(96,165,250,0.14);
+  --green:#4ade80;--green-s:rgba(74,222,128,0.12);
+  --yellow:#facc15;--yellow-s:rgba(250,204,21,0.14);
+  --red:#f87171;--red-s:rgba(248,113,113,0.14);--red-b:rgba(248,113,113,0.2);
+  --teal:var(--accent);--teal-s:var(--accent-soft);
+  --pink:#fb7185;--pink-s:rgba(251,113,133,0.14);
+  --gold:#fbbf24;--gold-s:rgba(251,191,36,0.14);
+  --grn:var(--green);--grn-s:var(--green-s);
+  --sky:#38bdf8;--sky-s:rgba(56,189,248,0.14);--sky-b:rgba(56,189,248,0.2);
+  --bd:var(--border);--bd2:var(--border2);
+  --tx:var(--text);--tx2:var(--text2);--tx3:var(--text3);
+  --gr:var(--accent);--gr-s:var(--accent-soft);--gr-b:rgba(45,212,191,0.28);
+  --pu:#60a5fa;--pu-s:rgba(96,165,250,0.14);--pu-b:rgba(96,165,250,0.28);
+  --pk:#fb7185;--pk-s:rgba(251,113,133,0.14);
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --serif:'Fraunces',Georgia,serif;--sans:'Fraunces',Georgia,serif;
+  --header-h:56px;--sidebar-w:260px;--hh:56px;--sw:260px;
+}
+
+body{background:var(--bg);color:var(--text);font-family:var(--mono)}
+header{height:var(--header-h);background:rgba(11,15,20,0.92);border-bottom:0.5px solid var(--border)}
+.header-brand,.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-icon,.hico{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7dd3fc);display:flex;align-items:center;justify-content:center;color:white}
+.brand-name,.hname{font-size:13px;font-weight:500;color:var(--text);letter-spacing:0.02em}
+.brand-name span,.hname span,.hname em{color:var(--accent);font-style:normal}
+.top-nav{display:flex;gap:8px;align-items:center;margin-left:1rem}
+.top-nav .nav-link{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:13px;border:0.5px solid transparent}
+.top-nav .nav-link:hover{background:var(--bg3);color:var(--text)}
+.top-nav .nav-link.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+aside{background:var(--bg);border-right:0.5px solid var(--border);top:calc(var(--header-h) + 2px);padding:0.5rem 0 2rem}
+.sidebar-label,.sg{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);padding:0 0.75rem;margin-bottom:6px;margin-top:0}
+.sidebar-section{padding:0 1rem 1rem;margin-bottom:0.5rem}
+.nav-item,.si{color:var(--text2);border-radius:8px;margin:0;width:100%}
+.nav-item:hover,.si:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active,.si.on{background:var(--accent-soft);color:var(--accent)}
+.nav-item.done,.si.dn{color:var(--green)}
+.nav-num,.sn{background:var(--bg3);color:var(--text3)}
+.nav-item.active .nav-num,.si.on .sn{background:var(--accent-soft);color:var(--accent)}
+.nav-item.done .nav-num,.si.dn .sn{background:var(--green-s);color:var(--green)}
+main{margin-left:var(--sw);flex:1;width:calc(100% - var(--sw));max-width:none;padding:2.5rem 2.5rem 5rem}
+
+@media(max-width:780px){:root{--sw:0px}aside{display:none}main{margin-left:0;padding:1.5rem 1.25rem 3rem}.ybopts{grid-template-columns:1fr}.mxgrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hbrand" href="index.html">
+    <div class="hico">⚙️</div>
+    <span class="hname"><em>git</em> / phase-4</span>
+  </a>
+  <nav class="top-nav">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link" href="git-phase2-branching.html">Phase 2</a>
+    <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
+    <a class="nav-link active" href="git-phase4-actions.html">Phase 4</a>
+    <a class="nav-link" href="git-phase5-expert.html">Phase 5</a>
+  </nav>
+  <div class="hfill"></div>
+  <div class="hbadge on">Actions & CI/CD</div>
+  <div class="hbadge">weeks 8–10</div>
+</header>
+<div class="hpwrap"><div class="hpfill" id="gp"></div></div>
+
+<div class="layout">
+<aside>
+  <div class="sidebar-label">lessons</div>
+  <div class="sidebar-section">
+    <button class="si on" onclick="go(0)" id="n0"><span class="sn">1</span>GitHub Actions intro</button>
+    <button class="si" onclick="go(1)" id="n1"><span class="sn">2</span>YAML syntax & triggers</button>
+    <button class="si" onclick="go(2)" id="n2"><span class="sn">3</span>Jobs, steps & runners</button>
+    <button class="si" onclick="go(3)" id="n3"><span class="sn">4</span>Secrets & environments</button>
+    <button class="si" onclick="go(4)" id="n4"><span class="sn">5</span>Real CI pipeline</button>
+    <button class="si" onclick="go(5)" id="n5"><span class="sn">6</span>Deploy to cloud</button>
+  </div>
+  <div class="sidebar-label">tools</div>
+  <div class="sidebar-section">
+    <button class="si" onclick="go(6)" id="n6"><span class="sn" style="background:var(--gr-s);color:var(--gr)">✦</span>YAML workflow builder</button>
+    <button class="si" onclick="go(7)" id="n7"><span class="sn" style="background:var(--gr-s);color:var(--gr)">✦</span>Pipeline simulator</button>
+    <button class="si" onclick="go(8)" id="n8"><span class="sn" style="background:var(--gr-s);color:var(--gr)">✦</span>Matrix build viewer</button>
+    <button class="si" onclick="go(9)" id="n9"><span class="sn" style="background:var(--gr-s);color:var(--gr)">✦</span>Quick reference</button>
+  </div>
+  <div class="spbox">
+    <div class="sprow"><span>progress</span><span id="ptxt">0 / 6</span></div>
+    <div class="spbar"><div class="spfill" id="spf"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ════ L0: Actions Intro ════ -->
+<section class="sec on" id="s0">
+  <div class="hero">
+    <div class="ey">Lesson 01 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>GitHub Actions &amp; <em>CI/CD</em></h1>
+    <p>GitHub Actions automates everything that happens around your code — tests run automatically on every push, code is deployed when PRs merge, and releases are created on version tags. No manual steps, no "it works on my machine."</p>
+    <div class="mr"><span class="mp gr">~25 min</span><span class="mp sk">concept</span><span class="mp">2025 must-know</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">what is CI/CD?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+      <div style="padding:14px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:11px;color:var(--sky);margin-bottom:7px;letter-spacing:.05em">CI — Continuous Integration</div>
+        <div style="font-size:12px;color:var(--tx2);line-height:1.6">Every code push automatically triggers: <strong>build</strong> the project, run <strong>all tests</strong>, check <strong>code quality</strong>. If anything breaks, you know in seconds — not days.</div>
+      </div>
+      <div style="padding:14px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:10px">
+        <div style="font-size:11px;color:var(--gr);margin-bottom:7px;letter-spacing:.05em">CD — Continuous Delivery/Deployment</div>
+        <div style="font-size:12px;color:var(--tx2);line-height:1.6">After CI passes, code is automatically <strong>deployed</strong> to staging or production. When main merges → users get the update. No manual SSH, no FTP uploads.</div>
+      </div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Why it matters:</b> Teams using CI/CD ship 200x more frequently with 24x lower failure rates (2023 State of DevOps report). It's the biggest single skill that elevates a developer's career right now.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github actions core concepts</div>
+    <div class="tbl"><table>
+      <tr><th>Concept</th><th>What it is</th></tr>
+      <tr><td>Workflow</td><td>A YAML file in <code>.github/workflows/</code> — defines the automation. One repo can have many workflows.</td></tr>
+      <tr><td>Event (trigger)</td><td>What starts the workflow: push, pull_request, schedule, release, workflow_dispatch (manual)</td></tr>
+      <tr><td>Job</td><td>A group of steps that run on the same runner. Jobs run in parallel by default.</td></tr>
+      <tr><td>Step</td><td>A single command or Action. Steps within a job run sequentially.</td></tr>
+      <tr><td>Runner</td><td>A virtual machine (ubuntu-latest, windows-latest, macos-latest) that runs your jobs</td></tr>
+      <tr><td>Action</td><td>A reusable unit from the Marketplace (e.g. actions/checkout, actions/setup-node)</td></tr>
+      <tr><td>Secret</td><td>Encrypted environment variable stored on GitHub — for API keys, passwords, tokens</td></tr>
+      <tr><td>Artifact</td><td>Files produced by a workflow (build output, test reports) that can be downloaded</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">your first workflow — hello github actions</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">.github/workflows/hello.yml</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">name</span><span class="t">:</span> Hello GitHub Actions
+
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">push</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [<span class="g">main</span>]
+
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">greet</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> <span class="g">ubuntu-latest</span>
+
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Checkout code
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Say hello
+        <span class="y">run</span><span class="t">:</span> <span class="g">echo "Hello from GitHub Actions! 🎉"</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Show the current date
+        <span class="y">run</span><span class="t">:</span> <span class="g">date</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> List repo files
+        <span class="y">run</span><span class="t">:</span> <span class="g">ls -la</span></div>
+    </div>
+    <div class="note ok"><i>✓</i><div><b>Try it right now:</b> Create <code>.github/workflows/hello.yml</code> in any repo, paste this, commit and push. Go to the Actions tab on GitHub within 10 seconds — you'll see it run live.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">quiz — actions concepts</div>
+    <div class="qc">
+      <div class="qq">What is the relationship between a Job and Steps in GitHub Actions?</div>
+      <div class="qo">
+        <button class="qb" onclick="quiz(this,'wrong','q0')">A. Jobs and Steps are the same thing — different names for the same concept</button>
+        <button class="qb" onclick="quiz(this,'correct','q0')">B. A Job contains multiple Steps. Steps run sequentially; Jobs run in parallel</button>
+        <button class="qb" onclick="quiz(this,'wrong','q0')">C. Steps contain Jobs — you must define steps first, then group them into jobs</button>
+        <button class="qb" onclick="quiz(this,'wrong','q0')">D. Jobs always run after all Steps complete across all jobs</button>
+      </div>
+      <div class="qfb" id="q0-fb"></div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <span style="font-size:12px;color:var(--tx3)">lesson 1 of 6</span>
+    <button class="btnp" onclick="nxt(0)">Next: YAML syntax & triggers →</button>
+  </div>
+</section>
+
+<!-- ════ L1: YAML syntax & triggers ════ -->
+<section class="sec" id="s1">
+  <div class="hero">
+    <div class="ey">Lesson 02 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>YAML syntax &amp; <em>triggers</em></h1>
+    <p>Every Actions workflow is a YAML file. YAML is whitespace-sensitive — indentation matters. Master the structure once and every workflow becomes readable.</p>
+    <div class="mr"><span class="mp gr">~40 min</span><span class="mp sk">core syntax</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">yaml crash course — the 5 rules</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">yaml rules every developer needs to know</span></div>
+      <div class="codeb"><span class="c"># Rule 1: Key-value pairs with colon-space</span>
+<span class="y">name</span><span class="t">:</span> My Workflow         <span class="c"># string value</span>
+<span class="y">timeout-minutes</span><span class="t">:</span> <span class="pu">30</span>     <span class="c"># number value</span>
+<span class="y">continue-on-error</span><span class="t">:</span> <span class="g">false</span> <span class="c"># boolean value</span>
+
+<span class="c"># Rule 2: Indentation = 2 spaces (never tabs)</span>
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">my-job</span><span class="t">:</span>           <span class="c"># 2 spaces</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest  <span class="c"># 4 spaces</span>
+    <span class="y">steps</span><span class="t">:</span>            <span class="c"># 4 spaces</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> echo hi   <span class="c"># 6 spaces (list item)</span>
+
+<span class="c"># Rule 3: Lists use dash-space</span>
+<span class="y">branches</span><span class="t">:</span>
+  <span class="t">-</span> main
+  <span class="t">-</span> develop
+<span class="c"># OR inline:</span>
+<span class="y">branches</span><span class="t">:</span> [main, develop]
+
+<span class="c"># Rule 4: Multiline strings</span>
+<span class="y">run</span><span class="t">:</span> <span class="t">|</span>           <span class="c"># pipe = literal block (keeps newlines)</span>
+  <span class="g">echo "line 1"</span>
+  <span class="g">echo "line 2"</span>
+  <span class="g">npm test</span>
+
+<span class="c"># Rule 5: Expression syntax ${{ }} for dynamic values</span>
+<span class="y">run</span><span class="t">:</span> <span class="g">echo "Branch is ${{ github.ref_name }}"</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">all the important triggers (on:)</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">workflow triggers — all common patterns</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># ── PUSH TRIGGER ─────────────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">push</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main, develop]   <span class="c"># only these branches</span>
+    <span class="y">paths</span><span class="t">:</span>                        <span class="c"># only when these files change</span>
+      <span class="t">-</span> <span class="g">'src/**'</span>
+      <span class="t">-</span> <span class="g">'package.json'</span>
+
+<span class="c"># ── PULL REQUEST TRIGGER ─────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">pull_request</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main]             <span class="c"># PRs targeting main</span>
+    <span class="y">types</span><span class="t">:</span> [opened, synchronize, reopened]
+
+<span class="c"># ── SCHEDULE (CRON) ──────────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">schedule</span><span class="t">:</span>
+    <span class="t">-</span> <span class="y">cron</span><span class="t">:</span> <span class="g">'0 9 * * 1-5'</span>       <span class="c"># 9am UTC, Mon–Fri</span>
+    <span class="t">-</span> <span class="y">cron</span><span class="t">:</span> <span class="g">'0 0 * * 0'</span>         <span class="c"># midnight Sunday</span>
+
+<span class="c"># ── MANUAL TRIGGER ───────────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">workflow_dispatch</span><span class="t">:</span>             <span class="c"># "Run workflow" button on GitHub</span>
+    <span class="y">inputs</span><span class="t">:</span>
+      <span class="y">environment</span><span class="t">:</span>
+        <span class="y">description</span><span class="t">:</span> <span class="g">'Deploy to?'</span>
+        <span class="y">default</span><span class="t">:</span> <span class="g">'staging'</span>
+        <span class="y">required</span><span class="t">:</span> <span class="g">true</span>
+
+<span class="c"># ── RELEASE TRIGGER ──────────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">release</span><span class="t">:</span>
+    <span class="y">types</span><span class="t">:</span> [created]             <span class="c"># when a GitHub Release is published</span>
+
+<span class="c"># ── MULTIPLE TRIGGERS ────────────────────────────────────</span>
+<span class="y">on</span><span class="t">:</span> [push, pull_request, workflow_dispatch]</div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github context — dynamic values inside workflows</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">useful context variables</span></div>
+      <div class="codeb"><span class="c"># github context — info about the triggering event</span>
+<span class="g">${{ github.sha }}</span>              <span class="c"># full commit SHA (e.g. a1b2c3d...)</span>
+<span class="g">${{ github.ref_name }}</span>         <span class="c"># branch name (main, feature/x)</span>
+<span class="g">${{ github.actor }}</span>            <span class="c"># username who triggered the workflow</span>
+<span class="g">${{ github.repository }}</span>       <span class="c"># owner/repo-name</span>
+<span class="g">${{ github.event_name }}</span>       <span class="c"># push, pull_request, etc.</span>
+<span class="g">${{ github.run_number }}</span>       <span class="c"># incrementing run count (1, 2, 3...)</span>
+
+<span class="c"># env context — environment variables</span>
+<span class="g">${{ env.MY_VAR }}</span>              <span class="c"># access any env: variable you defined</span>
+
+<span class="c"># secrets context — encrypted secrets</span>
+<span class="g">${{ secrets.MY_SECRET }}</span>       <span class="c"># never printed in logs (masked)</span>
+
+<span class="c"># Example usage</span>
+<span class="y">steps</span><span class="t">:</span>
+  <span class="t">- </span><span class="y">name</span><span class="t">:</span> Tag Docker image
+    <span class="y">run</span><span class="t">:</span> <span class="g">docker build -t app:${{ github.sha }} .</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — create a workflow with multiple triggers</div>
+    <div class="exc" id="e1-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e1-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Write a workflow triggered by push AND manual dispatch</span>
+        <span class="ebadge easy">easy</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>In your my-journal repo, create folder: <code>mkdir -p .github/workflows</code></li>
+          <li class="si2"><span class="sn2">2</span>Create <code>.github/workflows/info.yml</code> with triggers: <code>push</code> (main only) and <code>workflow_dispatch</code></li>
+          <li class="si2"><span class="sn2">3</span>Add a job with steps that print: branch name, actor, commit SHA, and current date</li>
+          <li class="si2"><span class="sn2">4</span>Use <code>${{ github.ref_name }}</code>, <code>${{ github.actor }}</code>, <code>${{ github.sha }}</code> in your echo commands</li>
+          <li class="si2"><span class="sn2">5</span>Commit and push. Go to Actions tab — watch it run automatically</li>
+          <li class="si2"><span class="sn2">6</span>Click "Run workflow" button (from the workflow_dispatch trigger) and trigger it manually too</li>
+        </ul>
+        <div class="hint"><strong>YAML gotcha:</strong> Indentation errors are the #1 cause of workflow failures. Use 2 spaces everywhere. Never mix tabs and spaces. VS Code's YAML extension (redhat.vscode-yaml) catches these before you push.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(1)">← Back</button>
+    <button class="btnp" onclick="nxt(1)">Next: Jobs, steps & runners →</button>
+  </div>
+</section>
+
+<!-- ════ L2: Jobs, steps, runners ════ -->
+<section class="sec" id="s2">
+  <div class="hero">
+    <div class="ey">Lesson 03 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>Jobs, steps &amp; <em>runners</em></h1>
+    <p>This is where workflows get powerful. Multiple jobs run in parallel. Jobs can depend on each other. And you can run the same job across 9 OS/version combinations simultaneously with a matrix.</p>
+    <div class="mr"><span class="mp gr">~45 min</span><span class="mp sk">core architecture</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">parallel jobs with dependencies</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">.github/workflows/pipeline.yml — job dependencies</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">name</span><span class="t">:</span> CI Pipeline
+
+<span class="y">on</span><span class="t">:</span> [push, pull_request]
+
+<span class="y">jobs</span><span class="t">:</span>
+
+  <span class="c"># Job 1: runs first (no needs:)</span>
+  <span class="y">lint</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm run lint</span>
+
+  <span class="c"># Job 2: also runs first (parallel with lint)</span>
+  <span class="y">test</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">node-version</span><span class="t">:</span> <span class="g">'20'</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci &amp;&amp; npm test</span>
+
+  <span class="c"># Job 3: waits for BOTH lint AND test to pass</span>
+  <span class="y">build</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">needs</span><span class="t">:</span> [lint, test]          <span class="c"># ← dependency declaration</span>
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm run build</span>
+
+  <span class="c"># Job 4: only runs on main branch, after build</span>
+  <span class="y">deploy</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">needs</span><span class="t">:</span> build
+    <span class="y">if</span><span class="t">:</span> <span class="g">github.ref == 'refs/heads/main'</span>  <span class="c"># ← conditional</span>
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">echo "Deploying to production!"</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">matrix strategy — test across multiple versions</div>
+    <p class="prose">A matrix runs the same job across multiple configurations simultaneously. Instead of writing 9 jobs for Node 18/20/22 × ubuntu/windows/macos, write one job with a matrix.</p>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">matrix strategy — 9 jobs from one definition</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">jobs</span><span class="t">:</span>
+  <span class="y">test</span><span class="t">:</span>
+    <span class="y">strategy</span><span class="t">:</span>
+      <span class="y">matrix</span><span class="t">:</span>
+        <span class="y">os</span><span class="t">:</span> [ubuntu-latest, windows-latest, macos-latest]
+        <span class="y">node</span><span class="t">:</span> [<span class="pu">18</span>, <span class="pu">20</span>, <span class="pu">22</span>]
+      <span class="y">fail-fast</span><span class="t">:</span> <span class="g">false</span>           <span class="c"># don't cancel others if one fails</span>
+
+    <span class="y">runs-on</span><span class="t">:</span> <span class="g">${{ matrix.os }}</span>     <span class="c"># dynamic runner from matrix</span>
+    <span class="y">name</span><span class="t">:</span> <span class="g">Node ${{ matrix.node }} on ${{ matrix.os }}</span>
+
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">node-version</span><span class="t">:</span> <span class="g">${{ matrix.node }}</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm test</span>
+
+<span class="c"># Result: 3 OS × 3 Node versions = 9 parallel jobs</span>
+<span class="c"># All run simultaneously — total time ≈ time of slowest single job</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">caching dependencies — speed up your pipeline</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">cache node_modules between runs</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">steps</span><span class="t">:</span>
+  <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+
+  <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+    <span class="y">with</span><span class="t">:</span>
+      <span class="y">node-version</span><span class="t">:</span> <span class="g">'20'</span>
+      <span class="y">cache</span><span class="t">:</span> <span class="g">'npm'</span>              <span class="c"># ← built-in caching!</span>
+
+  <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci</span>               <span class="c"># ~30s first run, ~3s cached runs</span>
+  <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm test</span>
+
+<span class="c"># Manual cache control</span>
+  <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/cache@v4</span>
+    <span class="y">with</span><span class="t">:</span>
+      <span class="y">path</span><span class="t">:</span> ~/.npm
+      <span class="y">key</span><span class="t">:</span> <span class="g">${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}</span>
+      <span class="y">restore-keys</span><span class="t">:</span> <span class="t">|</span>
+        <span class="g">${{ runner.os }}-node-</span></div>
+    </div>
+    <div class="note tip"><i>💡</i><div><b>Cache key strategy:</b> Hash your lockfile (<code>package-lock.json</code>, <code>requirements.txt</code>) as the cache key. When dependencies change, the hash changes, cache misses, and fresh packages install. Perfect invalidation automatically.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — build a multi-job pipeline</div>
+    <div class="exc" id="e2-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e2-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Create a pipeline with lint → test → build jobs</span>
+        <span class="ebadge med">medium</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Create a Node.js project: <code>npm init -y && npm install eslint jest --save-dev</code></li>
+          <li class="si2"><span class="sn2">2</span>Add a <code>sum.js</code> function and a <code>sum.test.js</code> test. Add <code>npm test</code> to package.json scripts.</li>
+          <li class="si2"><span class="sn2">3</span>Create <code>.github/workflows/ci.yml</code> with 3 jobs: <code>lint</code>, <code>test</code>, <code>build</code></li>
+          <li class="si2"><span class="sn2">4</span>Make <code>build</code> depend on both <code>lint</code> and <code>test</code> using <code>needs: [lint, test]</code></li>
+          <li class="si2"><span class="sn2">5</span>Push. Go to Actions → watch the DAG (directed acyclic graph) of jobs run in parallel then converge</li>
+          <li class="si2"><span class="sn2">6</span>Bonus: intentionally break a test, push, and watch the pipeline go red. Fix it and watch it go green.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(2)">← Back</button>
+    <button class="btnp" onclick="nxt(2)">Next: Secrets & environments →</button>
+  </div>
+</section>
+
+<!-- ════ L3: Secrets & environments ════ -->
+<section class="sec" id="s3">
+  <div class="hero">
+    <div class="ey">Lesson 04 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>Secrets &amp; <em>environments</em></h1>
+    <p>API keys, deploy tokens, and passwords should never be in your code. GitHub Secrets encrypts them at rest and injects them at runtime — they're never visible in logs.</p>
+    <div class="mr"><span class="mp gr">~30 min</span><span class="mp sk">security</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">interactive secrets manager</div>
+    <div class="secbox">
+      <div class="secboxh">Repository secrets — Settings → Secrets → Actions</div>
+      <div class="secrows" id="secrows">
+        <div class="secrow"><span class="sec-name">VERCEL_TOKEN</span><span class="sec-val">••••••••••••••••••••</span><span class="sec-date">Updated 3 days ago</span><button class="sec-del" onclick="delSecret(this)">Delete</button></div>
+        <div class="secrow"><span class="sec-name">DATABASE_URL</span><span class="sec-val">••••••••••••••••••••</span><span class="sec-date">Updated 1 week ago</span><button class="sec-del" onclick="delSecret(this)">Delete</button></div>
+        <div class="secrow"><span class="sec-name">SLACK_WEBHOOK</span><span class="sec-val">••••••••••••••••••••</span><span class="sec-date">Updated 2 weeks ago</span><button class="sec-del" onclick="delSecret(this)">Delete</button></div>
+      </div>
+      <div class="secadd">
+        <input class="secinput" id="secname" placeholder="SECRET_NAME (uppercase)" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')">
+        <input class="secinput" id="secval" placeholder="secret value" type="password">
+        <button class="secadd-btn" onclick="addSecret()">+ Add secret</button>
+      </div>
+    </div>
+    <div class="note danger"><i>🚫</i><div><b>NEVER echo a secret in a workflow run command.</b> GitHub automatically masks secrets in logs — but if you base64-encode or transform them, the mask may not work. Treat secrets as write-only.</div></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">using secrets in workflows</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">secrets usage patterns</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># Pass secret as environment variable (most common)</span>
+<span class="y">steps</span><span class="t">:</span>
+  <span class="t">- </span><span class="y">name</span><span class="t">:</span> Deploy to Vercel
+    <span class="y">env</span><span class="t">:</span>
+      <span class="y">VERCEL_TOKEN</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_TOKEN }}</span>
+    <span class="y">run</span><span class="t">:</span> <span class="g">vercel deploy --prod</span>
+
+<span class="c"># Pass to an Action's input</span>
+  <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/deploy@v2</span>
+    <span class="y">with</span><span class="t">:</span>
+      <span class="y">token</span><span class="t">:</span> <span class="g">${{ secrets.GITHUB_TOKEN }}</span>   <span class="c"># built-in token</span>
+      <span class="y">api-key</span><span class="t">:</span> <span class="g">${{ secrets.MY_API_KEY }}</span>
+
+<span class="c"># Repo-level vs Environment-level secrets</span>
+<span class="c"># Repository: available to all workflows</span>
+<span class="c"># Environment: only available when deploying to that env</span>
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">deploy-prod</span><span class="t">:</span>
+    <span class="y">environment</span><span class="t">:</span> production       <span class="c"># gates on required reviewers</span>
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">env</span><span class="t">:</span>
+          <span class="y">PROD_KEY</span><span class="t">:</span> <span class="g">${{ secrets.PROD_API_KEY }}</span>  <span class="c"># env-level secret</span>
+        <span class="y">run</span><span class="t">:</span> <span class="g">./deploy.sh production</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">github environments — staging & production gates</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">environment protection rules</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="c"># Settings → Environments → production → Protection rules:
+# ✓ Required reviewers: @yourteam-leads
+# ✓ Wait timer: 5 minutes
+# ✓ Deployment branches: main only</span>
+
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">deploy-staging</span><span class="t">:</span>
+    <span class="y">environment</span><span class="t">:</span> staging           <span class="c"># deploys immediately</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">echo "Deploying to staging..."</span>
+
+  <span class="y">deploy-production</span><span class="t">:</span>
+    <span class="y">needs</span><span class="t">:</span> deploy-staging
+    <span class="y">environment</span><span class="t">:</span> production        <span class="c"># waits for manual approval!</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">echo "Deploying to production!"</span></div>
+    </div>
+    <div class="note ok"><i>✓</i><div><b>Production gates are gold.</b> Setting required reviewers on your production environment means no code reaches production without a human approving it — even if the automated pipeline would have deployed it.</div></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(3)">← Back</button>
+    <button class="btnp" onclick="nxt(3)">Next: Real CI pipeline →</button>
+  </div>
+</section>
+
+<!-- ════ L4: Real CI Pipeline ════ -->
+<section class="sec" id="s4">
+  <div class="hero">
+    <div class="ey">Lesson 05 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>Real <em>CI pipeline</em></h1>
+    <p>A production-grade CI workflow that you can use directly in any project. Tests, linting, coverage, security scan, and artifacts — all automated.</p>
+    <div class="mr"><span class="mp gr">~50 min</span><span class="mp sk">production-grade</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">complete production ci workflow</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">.github/workflows/ci.yml — production-ready</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">name</span><span class="t">:</span> CI
+
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">push</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main]
+  <span class="y">pull_request</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main]
+
+<span class="y">env</span><span class="t">:</span>
+  <span class="y">NODE_VERSION</span><span class="t">:</span> <span class="g">'20'</span>
+
+<span class="y">jobs</span><span class="t">:</span>
+
+  <span class="c">### ── JOB 1: Lint & Format ─────────────────────────────</span>
+  <span class="y">lint</span><span class="t">:</span>
+    <span class="y">name</span><span class="t">:</span> Lint &amp; Format Check
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">node-version</span><span class="t">:</span> <span class="g">${{ env.NODE_VERSION }}</span>
+          <span class="y">cache</span><span class="t">:</span> <span class="g">npm</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm run lint</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm run format:check</span>
+
+  <span class="c">### ── JOB 2: Tests with Coverage ──────────────────────</span>
+  <span class="y">test</span><span class="t">:</span>
+    <span class="y">name</span><span class="t">:</span> Tests &amp; Coverage
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">node-version</span><span class="t">:</span> <span class="g">${{ env.NODE_VERSION }}</span>
+          <span class="y">cache</span><span class="t">:</span> <span class="g">npm</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm test -- --coverage</span>
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Upload coverage report
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">actions/upload-artifact@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">name</span><span class="t">:</span> coverage-report
+          <span class="y">path</span><span class="t">:</span> coverage/
+
+  <span class="c">### ── JOB 3: Security Audit ────────────────────────────</span>
+  <span class="y">security</span><span class="t">:</span>
+    <span class="y">name</span><span class="t">:</span> Security Audit
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm audit --audit-level=high</span>
+
+  <span class="c">### ── JOB 4: Build (needs lint + test) ─────────────────</span>
+  <span class="y">build</span><span class="t">:</span>
+    <span class="y">name</span><span class="t">:</span> Production Build
+    <span class="y">needs</span><span class="t">:</span> [lint, test, security]
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/setup-node@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">node-version</span><span class="t">:</span> <span class="g">${{ env.NODE_VERSION }}</span>
+          <span class="y">cache</span><span class="t">:</span> <span class="g">npm</span>
+      <span class="t">- </span><span class="y">run</span><span class="t">:</span> <span class="g">npm ci &amp;&amp; npm run build</span>
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Upload build artifact
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">actions/upload-artifact@v4</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">name</span><span class="t">:</span> dist-<span class="g">${{ github.sha }}</span>
+          <span class="y">path</span><span class="t">:</span> dist/
+
+  <span class="c">### ── JOB 5: Deploy (main only) ────────────────────────</span>
+  <span class="y">deploy</span><span class="t">:</span>
+    <span class="y">name</span><span class="t">:</span> Deploy to Vercel
+    <span class="y">needs</span><span class="t">:</span> build
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">if</span><span class="t">:</span> <span class="g">github.ref == 'refs/heads/main' &amp;&amp; github.event_name == 'push'</span>
+    <span class="y">environment</span><span class="t">:</span> production
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">amondnet/vercel-action@v25</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">vercel-token</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_TOKEN }}</span>
+          <span class="y">vercel-org-id</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_ORG_ID }}</span>
+          <span class="y">vercel-project-id</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_PROJECT_ID }}</span>
+          <span class="y">vercel-args</span><span class="t">:</span> <span class="g">'--prod'</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">exercise — production ci for your own project</div>
+    <div class="exc" id="e4-1">
+      <div class="exh" aria-expanded="true" onclick="tog(this)">
+        <div class="ck" onclick="mkdn(event,'e4-1')"><svg viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9.5 10.5,2.5"/></svg></div>
+        <span class="etitle">Build a full CI pipeline for a real Node.js or Python project</span>
+        <span class="ebadge hard">hard</span>
+        <span class="etog"><svg viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4"/></svg></span>
+      </div>
+      <div class="exb open">
+        <ul class="sl">
+          <li class="si2"><span class="sn2">1</span>Create a small web project (React app: <code>npx create-react-app</code>, or Next.js: <code>npx create-next-app</code>)</li>
+          <li class="si2"><span class="sn2">2</span>Push it to GitHub. Set up the full CI workflow above (copy it, adjust paths)</li>
+          <li class="si2"><span class="sn2">3</span>Watch all 5 jobs run. Check the Artifacts section — download the coverage report.</li>
+          <li class="si2"><span class="sn2">4</span>Add a branch protection rule: Settings → Branches → main → Require status checks: test, lint must pass before merging</li>
+          <li class="si2"><span class="sn2">5</span>Create a PR that intentionally breaks a test. Watch GitHub block the merge with "Required checks failed"</li>
+          <li class="si2"><span class="sn2">6</span>Fix the test. Push. Watch CI go green. Now you can merge.</li>
+        </ul>
+        <div class="hint"><strong>Branch protection rules</strong> are the real power move. Once set up, NO ONE can merge broken code to main — not even repo owners. This is how professional teams maintain code quality at scale.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(4)">← Back</button>
+    <button class="btnp" onclick="nxt(4)">Next: Deploy to cloud →</button>
+  </div>
+</section>
+
+<!-- ════ L5: Deploy to cloud ════ -->
+<section class="sec" id="s5">
+  <div class="hero">
+    <div class="ey">Lesson 06 of 06 · Phase 4 — GitHub Actions & CI/CD</div>
+    <h1>Deploy to <em>cloud</em></h1>
+    <p>Connect your CI pipeline to the world. Deploy to Vercel, Netlify, Docker Hub, and AWS — all triggered automatically on merge to main.</p>
+    <div class="mr"><span class="mp gr">~40 min</span><span class="mp sk">deployment</span></div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">deploy to vercel (front-end projects)</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">vercel auto-deploy workflow</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">name</span><span class="t">:</span> Deploy to Vercel
+
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">push</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main]
+
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">deploy</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Deploy to Vercel Production
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">amondnet/vercel-action@v25</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">vercel-token</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_TOKEN }}</span>
+          <span class="y">vercel-org-id</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_ORG_ID }}</span>
+          <span class="y">vercel-project-id</span><span class="t">:</span> <span class="g">${{ secrets.VERCEL_PROJECT_ID }}</span>
+          <span class="y">vercel-args</span><span class="t">:</span> <span class="g">'--prod'</span>
+
+<span class="c"># Get tokens from: vercel.com → Settings → Tokens
+# Get org/project IDs from: .vercel/project.json after first deploy</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">docker build & push to container registry</div>
+    <div class="code">
+      <div class="codeh"><div class="cdd"><div class="cd" style="background:#ff5f57"></div><div class="cd" style="background:#ffbd2e"></div><div class="cd" style="background:#28c940"></div></div><span class="cfn">docker build + push workflow</span><button class="ccp" onclick="cp(this)">copy</button></div>
+      <div class="codeb"><span class="y">name</span><span class="t">:</span> Docker Build &amp; Push
+
+<span class="y">on</span><span class="t">:</span>
+  <span class="y">push</span><span class="t">:</span>
+    <span class="y">branches</span><span class="t">:</span> [main]
+    <span class="y">tags</span><span class="t">:</span> [<span class="g">'v*'</span>]              <span class="c"># also on version tags (v1.0.0)</span>
+
+<span class="y">env</span><span class="t">:</span>
+  <span class="y">REGISTRY</span><span class="t">:</span> ghcr.io
+  <span class="y">IMAGE_NAME</span><span class="t">:</span> <span class="g">${{ github.repository }}</span>
+
+<span class="y">jobs</span><span class="t">:</span>
+  <span class="y">build-push</span><span class="t">:</span>
+    <span class="y">runs-on</span><span class="t">:</span> ubuntu-latest
+    <span class="y">permissions</span><span class="t">:</span>
+      <span class="y">contents</span><span class="t">:</span> read
+      <span class="y">packages</span><span class="t">:</span> write             <span class="c"># needed for GHCR</span>
+
+    <span class="y">steps</span><span class="t">:</span>
+      <span class="t">- </span><span class="y">uses</span><span class="t">:</span> <span class="pu">actions/checkout@v4</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Log into GitHub Container Registry
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">docker/login-action@v3</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">registry</span><span class="t">:</span> <span class="g">${{ env.REGISTRY }}</span>
+          <span class="y">username</span><span class="t">:</span> <span class="g">${{ github.actor }}</span>
+          <span class="y">password</span><span class="t">:</span> <span class="g">${{ secrets.GITHUB_TOKEN }}</span>
+
+      <span class="t">- </span><span class="y">name</span><span class="t">:</span> Build &amp; push Docker image
+        <span class="y">uses</span><span class="t">:</span> <span class="pu">docker/build-push-action@v5</span>
+        <span class="y">with</span><span class="t">:</span>
+          <span class="y">context</span><span class="t">:</span> <span class="g">.</span>
+          <span class="y">push</span><span class="t">:</span> <span class="g">true</span>
+          <span class="y">tags</span><span class="t">:</span> <span class="g">${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}</span>
+          <span class="y">cache-from</span><span class="t">:</span> <span class="g">type=gha</span>   <span class="c"># GitHub Actions cache</span>
+          <span class="y">cache-to</span><span class="t">:</span> <span class="g">type=gha,mode=max</span></div>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="ct">🎉 phase 4 complete — what you mastered</div>
+    <div class="cgrid">
+      <div class="ctick">✓ GitHub Actions architecture</div>
+      <div class="ctick">✓ YAML syntax & all trigger types</div>
+      <div class="ctick">✓ Parallel jobs & needs: dependencies</div>
+      <div class="ctick">✓ Matrix builds across OS/versions</div>
+      <div class="ctick">✓ Secrets, environments & protection gates</div>
+      <div class="ctick">✓ Production CI + deploy to Vercel/Docker</div>
+    </div>
+    <div class="note pu" style="margin-top:1rem"><i>🚀</i><div><b>Ready for Phase 5?</b> The final boss — Git internals, bisect, cherry-pick, hooks, submodules, Conventional Commits, and your first open source contribution.</div></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="prv(5)">← Back</button>
+    <button class="btnp" onclick="go(6)">YAML Builder →</button>
+  </div>
+</section>
+
+<!-- ════ L6: YAML Builder ════ -->
+<section class="sec" id="s6">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>YAML workflow <em>builder</em></h1>
+    <p>Select options to generate a custom GitHub Actions workflow. Copy the output directly into your <code>.github/workflows/</code> folder.</p>
+    <div class="mr"><span class="mp gr">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="ybuilder">
+      <div class="ybh"><span class="ybtitle">configure your workflow</span><button style="font-size:10px;padding:3px 10px;border-radius:5px;background:none;border:0.5px solid var(--bd);color:var(--tx3);cursor:pointer;font-family:var(--mono)" onclick="resetBuilder()">reset</button></div>
+      <div class="ybopts">
+        <div class="ybpane">
+          <div class="ybsec">
+            <div class="ybsec-title">Triggers</div>
+            <div class="ybchips">
+              <span class="ybchip sel" data-g="trigger" data-v="push" onclick="toggleChip(this)">push</span>
+              <span class="ybchip" data-g="trigger" data-v="pull_request" onclick="toggleChip(this)">pull_request</span>
+              <span class="ybchip" data-g="trigger" data-v="schedule" onclick="toggleChip(this)">schedule</span>
+              <span class="ybchip" data-g="trigger" data-v="dispatch" onclick="toggleChip(this)">manual</span>
+              <span class="ybchip" data-g="trigger" data-v="release" onclick="toggleChip(this)">release</span>
+            </div>
+          </div>
+          <div class="ybsec">
+            <div class="ybsec-title">Language / Runtime</div>
+            <div class="ybchips">
+              <span class="ybchip sel" data-g="lang" data-v="node" onclick="pickLang(this)">Node.js</span>
+              <span class="ybchip" data-g="lang" data-v="python" onclick="pickLang(this)">Python</span>
+              <span class="ybchip" data-g="lang" data-v="go" onclick="pickLang(this)">Go</span>
+              <span class="ybchip" data-g="lang" data-v="java" onclick="pickLang(this)">Java</span>
+              <span class="ybchip" data-g="lang" data-v="rust" onclick="pickLang(this)">Rust</span>
+            </div>
+          </div>
+          <div class="ybsec">
+            <div class="ybsec-title">Runner</div>
+            <div class="ybchips">
+              <span class="ybchip sel" data-g="runner" data-v="ubuntu" onclick="pickRunner(this)">ubuntu</span>
+              <span class="ybchip" data-g="runner" data-v="macos" onclick="pickRunner(this)">macos</span>
+              <span class="ybchip" data-g="runner" data-v="windows" onclick="pickRunner(this)">windows</span>
+            </div>
+          </div>
+        </div>
+        <div class="ybpane">
+          <div class="ybsec">
+            <div class="ybsec-title">Jobs to Include</div>
+            <div class="ybchips">
+              <span class="ybchip sel" data-g="job" data-v="lint" onclick="toggleChip(this)">lint</span>
+              <span class="ybchip sel" data-g="job" data-v="test" onclick="toggleChip(this)">test</span>
+              <span class="ybchip" data-g="job" data-v="build" onclick="toggleChip(this)">build</span>
+              <span class="ybchip" data-g="job" data-v="security" onclick="toggleChip(this)">security audit</span>
+              <span class="ybchip" data-g="job" data-v="docker" onclick="toggleChip(this)">docker push</span>
+              <span class="ybchip" data-g="job" data-v="deploy" onclick="toggleChip(this)">vercel deploy</span>
+            </div>
+          </div>
+          <div class="ybsec">
+            <div class="ybsec-title">Extras</div>
+            <div class="ybchips">
+              <span class="ybchip sel" data-g="extra" data-v="cache" onclick="toggleChip(this)">caching</span>
+              <span class="ybchip" data-g="extra" data-v="matrix" onclick="toggleChip(this)">matrix build</span>
+              <span class="ybchip" data-g="extra" data-v="artifact" onclick="toggleChip(this)">artifacts</span>
+              <span class="ybchip" data-g="extra" data-v="slack" onclick="toggleChip(this)">slack notify</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ybout" id="ybout"><!-- generated --></div>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="prv(6)">← Lessons</button>
+    <button class="btnp" onclick="go(7)">Pipeline Simulator →</button>
+  </div>
+</section>
+
+<!-- ════ L7: Pipeline Simulator ════ -->
+<section class="sec" id="s7">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Pipeline <em>simulator</em></h1>
+    <p>Watch a CI/CD pipeline run step by step with live log output. Press Run to start the simulation.</p>
+    <div class="mr"><span class="mp gr">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="pipeline">
+      <div class="plh">
+        <span class="plhinfo" id="plstatus">Ready to run · commit <code style="color:var(--gr)">4f2a1b3</code> → main</span>
+        <button class="plrun" id="plrunbtn" onclick="runPipeline()">▶ Run Pipeline</button>
+      </div>
+      <div class="plstages">
+        <div class="plstage">
+          <div class="plsicon" id="pli0">🔍</div>
+          <div class="plsname">Lint</div>
+          <div class="plstime" id="plt0">–</div>
+        </div>
+        <div class="plasep" id="sep0"></div>
+        <div class="plstage">
+          <div class="plsicon" id="pli1">🧪</div>
+          <div class="plsname">Test</div>
+          <div class="plstime" id="plt1">–</div>
+        </div>
+        <div class="plasep" id="sep1"></div>
+        <div class="plstage">
+          <div class="plsicon" id="pli2">🔒</div>
+          <div class="plsname">Security</div>
+          <div class="plstime" id="plt2">–</div>
+        </div>
+        <div class="plasep" id="sep2"></div>
+        <div class="plstage">
+          <div class="plsicon" id="pli3">🏗</div>
+          <div class="plsname">Build</div>
+          <div class="plstime" id="plt3">–</div>
+        </div>
+        <div class="plasep" id="sep3"></div>
+        <div class="plstage">
+          <div class="plsicon" id="pli4">🚀</div>
+          <div class="plsname">Deploy</div>
+          <div class="plstime" id="plt4">–</div>
+        </div>
+      </div>
+      <div class="pllog" id="pllog"><span style="color:var(--tx3)"># Pipeline ready. Press Run to start.</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:-1rem">
+      <button onclick="setMode('pass')" id="modepass" style="font-size:11px;padding:5px 14px;border-radius:6px;background:var(--gr-s);border:0.5px solid var(--gr-b);color:var(--gr);cursor:pointer;font-family:var(--mono);transition:all .12s">✓ All Pass mode</button>
+      <button onclick="setMode('fail')" id="modefail" style="font-size:11px;padding:5px 14px;border-radius:6px;background:var(--bg3);border:0.5px solid var(--bd);color:var(--tx2);cursor:pointer;font-family:var(--mono);transition:all .12s">✗ Test Fail mode</button>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(6)">← YAML Builder</button>
+    <button class="btnp" onclick="go(8)">Matrix Build →</button>
+  </div>
+</section>
+
+<!-- ════ L8: Matrix Build ════ -->
+<section class="sec" id="s8">
+  <div class="hero">
+    <div class="ey">Tool — Interactive</div>
+    <h1>Matrix build <em>viewer</em></h1>
+    <p>See how a matrix strategy spawns parallel jobs. Click Run to watch 9 jobs execute across 3 operating systems and 3 Node versions.</p>
+    <div class="mr"><span class="mp gr">interactive</span></div>
+  </div>
+  <div class="cb">
+    <div class="matrix-viz">
+      <div class="mxh">matrix: os × node-version → 9 parallel jobs</div>
+      <div style="display:flex;gap:0;background:var(--bg3);border-bottom:0.5px solid var(--bd)">
+        <div style="width:80px;padding:6px 10px;font-size:10px;color:var(--tx3);border-right:0.5px solid var(--bd)">os / node</div>
+        <div style="flex:1;padding:6px 10px;font-size:10px;color:var(--sky);text-align:center;border-right:0.5px solid var(--bd)">Node 18</div>
+        <div style="flex:1;padding:6px 10px;font-size:10px;color:var(--sky);text-align:center;border-right:0.5px solid var(--bd)">Node 20</div>
+        <div style="flex:1;padding:6px 10px;font-size:10px;color:var(--sky);text-align:center">Node 22</div>
+      </div>
+      <div class="mxgrid" style="grid-template-columns:80px 1fr 1fr 1fr;gap:0;padding:0;background:var(--bg2)">
+        <div style="padding:8px 10px;font-size:11px;color:var(--tx3);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);display:flex;align-items:center">🐧 ubuntu</div>
+        <div class="mxcell" id="mx0" style="border-radius:0;border:none;border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">ubuntu / 18</div><div class="mxcell-st" id="mxs0">–</div></div>
+        <div class="mxcell" id="mx1" style="border-radius:0;border:none;border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">ubuntu / 20</div><div class="mxcell-st" id="mxs1">–</div></div>
+        <div class="mxcell" id="mx2" style="border-radius:0;border:none;border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">ubuntu / 22</div><div class="mxcell-st" id="mxs2">–</div></div>
+        <div style="padding:8px 10px;font-size:11px;color:var(--tx3);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);display:flex;align-items:center">🍎 macos</div>
+        <div class="mxcell" id="mx3" style="border-radius:0;border:none;border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">macos / 18</div><div class="mxcell-st" id="mxs3">–</div></div>
+        <div class="mxcell" id="mx4" style="border-radius:0;border:none;border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">macos / 20</div><div class="mxcell-st" id="mxs4">–</div></div>
+        <div class="mxcell" id="mx5" style="border-radius:0;border:none;border-bottom:0.5px solid var(--bd)"><div class="mxcell-ver">macos / 22</div><div class="mxcell-st" id="mxs5">–</div></div>
+        <div style="padding:8px 10px;font-size:11px;color:var(--tx3);border-right:0.5px solid var(--bd);display:flex;align-items:center">🪟 windows</div>
+        <div class="mxcell" id="mx6" style="border-radius:0;border:none;border-right:0.5px solid var(--bd)"><div class="mxcell-ver">windows / 18</div><div class="mxcell-st" id="mxs6">–</div></div>
+        <div class="mxcell" id="mx7" style="border-radius:0;border:none;border-right:0.5px solid var(--bd)"><div class="mxcell-ver">windows / 20</div><div class="mxcell-st" id="mxs7">–</div></div>
+        <div class="mxcell" id="mx8" style="border-radius:0;border:none"><div class="mxcell-ver">windows / 22</div><div class="mxcell-st" id="mxs8">–</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button onclick="runMatrix(false)" style="font-size:11px;padding:6px 16px;border-radius:6px;background:var(--gr);border:none;color:var(--bg);cursor:pointer;font-family:var(--mono);font-weight:700">▶ Run Matrix (all pass)</button>
+      <button onclick="runMatrix(true)" style="font-size:11px;padding:6px 16px;border-radius:6px;background:var(--red-s);border:0.5px solid var(--red-b);color:var(--red);cursor:pointer;font-family:var(--mono)">▶ Run with 1 failure</button>
+      <button onclick="resetMatrix()" style="font-size:11px;padding:6px 14px;border-radius:6px;background:var(--bg3);border:0.5px solid var(--bd);color:var(--tx2);cursor:pointer;font-family:var(--mono)">↺ Reset</button>
+    </div>
+  </div>
+  <div class="lnav">
+    <button class="btns" onclick="go(7)">← Pipeline</button>
+    <button class="btnp" onclick="go(9)">Quick Reference →</button>
+  </div>
+</section>
+
+<!-- ════ L9: Reference ════ -->
+<section class="sec" id="s9">
+  <div class="hero">
+    <div class="ey">Tool — Reference</div>
+    <h1>Phase 4 quick <em>reference</em></h1>
+    <p>All GitHub Actions concepts, triggers, and Marketplace actions in one place.</p>
+  </div>
+
+  <div class="cb"><div class="ct">workflow structure</div>
+    <div class="tbl"><table>
+      <tr><th>Key</th><th>Description</th></tr>
+      <tr><td>name:</td><td>Workflow name (shown in GitHub UI)</td></tr>
+      <tr><td>on:</td><td>Event triggers — push, pull_request, schedule, workflow_dispatch, release</td></tr>
+      <tr><td>env:</td><td>Workflow-level environment variables (accessible to all jobs)</td></tr>
+      <tr><td>jobs:</td><td>Top-level map of jobs. Jobs run in parallel unless needs: is specified</td></tr>
+      <tr><td>runs-on:</td><td>Runner OS: ubuntu-latest, windows-latest, macos-latest</td></tr>
+      <tr><td>needs:</td><td>Job dependencies — list of jobs that must pass first</td></tr>
+      <tr><td>if:</td><td>Conditional expression — job only runs if true</td></tr>
+      <tr><td>steps:</td><td>Ordered list of commands and actions within a job</td></tr>
+      <tr><td>uses:</td><td>Reference a reusable action from Marketplace</td></tr>
+      <tr><td>run:</td><td>Shell command to execute</td></tr>
+      <tr><td>with:</td><td>Input parameters for an action</td></tr>
+      <tr><td>environment:</td><td>Named environment with protection rules and secrets</td></tr>
+    </table></div>
+  </div>
+
+  <div class="cb"><div class="ct">essential marketplace actions — 2025</div>
+    <div class="marketplace">
+      <div class="mcard"><div class="mcard-icon">📥</div><div class="mcard-name">actions/checkout</div><div class="mcard-desc">Clone your repo into the runner. Always the first step.</div><div class="mcard-uses">uses: actions/checkout@v4</div></div>
+      <div class="mcard"><div class="mcard-icon">🟢</div><div class="mcard-name">actions/setup-node</div><div class="mcard-desc">Install Node.js with a specific version and npm cache.</div><div class="mcard-uses">uses: actions/setup-node@v4</div></div>
+      <div class="mcard"><div class="mcard-icon">🐍</div><div class="mcard-name">actions/setup-python</div><div class="mcard-desc">Install Python with a specific version and pip cache.</div><div class="mcard-uses">uses: actions/setup-python@v5</div></div>
+      <div class="mcard"><div class="mcard-icon">💾</div><div class="mcard-name">actions/cache</div><div class="mcard-desc">Cache dependencies between runs. Key = lockfile hash.</div><div class="mcard-uses">uses: actions/cache@v4</div></div>
+      <div class="mcard"><div class="mcard-icon">📦</div><div class="mcard-name">actions/upload-artifact</div><div class="mcard-desc">Save build outputs, test reports, and logs as artifacts.</div><div class="mcard-uses">uses: actions/upload-artifact@v4</div></div>
+      <div class="mcard"><div class="mcard-icon">🐳</div><div class="mcard-name">docker/build-push-action</div><div class="mcard-desc">Build and push Docker images with BuildKit.</div><div class="mcard-uses">uses: docker/build-push-action@v5</div></div>
+      <div class="mcard"><div class="mcard-icon">▲</div><div class="mcard-name">vercel-action</div><div class="mcard-desc">Deploy to Vercel production or preview.</div><div class="mcard-uses">amondnet/vercel-action@v25</div></div>
+      <div class="mcard"><div class="mcard-icon">🔔</div><div class="mcard-name">slack-notify</div><div class="mcard-desc">Send Slack messages on success, failure, or completion.</div><div class="mcard-uses">rtCamp/action-slack-notify@v2</div></div>
+    </div>
+  </div>
+
+  <div class="cb"><div class="ct">github context — useful variables</div>
+    <div class="tbl"><table>
+      <tr><th>Variable</th><th>Value</th></tr>
+      <tr><td>github.sha</td><td>Full 40-char commit SHA</td></tr>
+      <tr><td>github.ref_name</td><td>Branch or tag name (main, v1.0.0)</td></tr>
+      <tr><td>github.actor</td><td>Username that triggered the workflow</td></tr>
+      <tr><td>github.repository</td><td>owner/repo format</td></tr>
+      <tr><td>github.event_name</td><td>push, pull_request, schedule, etc.</td></tr>
+      <tr><td>github.run_number</td><td>Sequential run count (1, 2, 3…)</td></tr>
+      <tr><td>github.run_id</td><td>Unique run ID for this execution</td></tr>
+      <tr><td>runner.os</td><td>Linux, macOS, or Windows</td></tr>
+      <tr><td>secrets.GITHUB_TOKEN</td><td>Auto-generated token for repo operations</td></tr>
+    </table></div>
+  </div>
+
+  <div class="lnav">
+    <button class="btns" onclick="go(8)">← Matrix</button>
+    <button class="btnp" onclick="goPhase5()">Phase 5: Expert & Open Source ↗</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ── NAV ── */
+let cur=0;const total=6;const doneSet=new Set();
+function go(n){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));document.getElementById('s'+n).classList.add('on');document.getElementById('n'+n).classList.add('on');cur=n;window.scrollTo({top:0,behavior:'smooth'});if(n===6)renderYaml();}
+function nxt(n){doneSet.add(n);document.getElementById('n'+n).classList.add('dn');upProg();go(n+1);}
+function prv(n){go(n-1);}
+function upProg(){const p=Math.round((doneSet.size/total)*100);document.getElementById('gp').style.width=p+'%';document.getElementById('spf').style.width=p+'%';document.getElementById('ptxt').textContent=doneSet.size+' / '+total;}
+function goPhase5(){alert('Phase 5: Expert & Open Source — open git-phase5-expert.html when ready!');}
+
+/* ── EXERCISE ── */
+function tog(h){const b=h.nextElementSibling;const o=b.classList.contains('open');b.classList.toggle('open',!o);h.setAttribute('aria-expanded',!o);}
+function mkdn(e,id){e.stopPropagation();document.getElementById(id).classList.toggle('dn');}
+
+/* ── COPY ── */
+function cp(btn){const text=btn.closest('.code').querySelector('.codeb').innerText;navigator.clipboard.writeText(text.replace(/^\$ /gm,'').trim()).then(()=>{btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1600);});}
+
+/* ── QUIZ ── */
+function quiz(btn,r,qid){btn.closest('.qo').querySelectorAll('.qb').forEach(b=>b.disabled=true);btn.classList.add(r);const fb=document.getElementById(qid+'-fb');fb.classList.add('show');const msgs={q0:{ok:'Correct! Jobs are the parallel workers. Each job has sequential steps. Jobs without needs: run simultaneously.',no:'Jobs contain steps. Steps run one after another inside a job. Jobs without needs: run in parallel.'}};if(r==='correct'){fb.classList.add('ok');fb.textContent='✓ '+(msgs[qid]?.ok||'');}else{fb.classList.add('no');fb.textContent='✗ '+(msgs[qid]?.no||'');btn.closest('.qo').querySelectorAll('.qb').forEach(b=>{if(b.getAttribute('onclick')?.includes("'correct'"))b.classList.add('ok');});}}
+
+/* ── SECRETS MANAGER ── */
+function addSecret(){
+  const name=document.getElementById('secname').value.trim();
+  const val=document.getElementById('secval').value.trim();
+  if(!name||!val){alert('Enter both a name and value');return;}
+  const row=document.createElement('div');row.className='secrow';
+  row.innerHTML=`<span class="sec-name">${name}</span><span class="sec-val">••••••••••••••••••••</span><span class="sec-date">Updated just now</span><button class="sec-del" onclick="delSecret(this)">Delete</button>`;
+  document.getElementById('secrows').appendChild(row);
+  document.getElementById('secname').value='';document.getElementById('secval').value='';
+}
+function delSecret(btn){if(confirm('Delete this secret?'))btn.closest('.secrow').remove();}
+
+/* ── YAML BUILDER ── */
+const builderState={triggers:new Set(['push']),lang:'node',runner:'ubuntu',jobs:new Set(['lint','test']),extras:new Set(['cache'])};
+function toggleChip(el){const v=el.dataset.v,g=el.dataset.g;let set;if(g==='trigger')set=builderState.triggers;else if(g==='job')set=builderState.jobs;else if(g==='extra')set=builderState.extras;if(!set)return;if(set.has(v)){if(set.size<=1&&g!=='extra')return;set.delete(v);el.classList.remove('sel');}else{set.add(v);el.classList.add('sel');}renderYaml();}
+function pickLang(el){document.querySelectorAll('[data-g="lang"]').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');builderState.lang=el.dataset.v;renderYaml();}
+function pickRunner(el){document.querySelectorAll('[data-g="runner"]').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');builderState.runner=el.dataset.v;renderYaml();}
+function resetBuilder(){builderState.triggers=new Set(['push']);builderState.lang='node';builderState.runner='ubuntu';builderState.jobs=new Set(['lint','test']);builderState.extras=new Set(['cache']);document.querySelectorAll('.ybchip').forEach(c=>{c.classList.remove('sel');if(['push','node','ubuntu','lint','test','cache'].includes(c.dataset.v))c.classList.add('sel');});renderYaml();}
+const langSetup={node:`      - uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'npm'\n      - run: npm ci`,python:`      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.12'\n      - run: pip install -r requirements.txt`,go:`      - uses: actions/setup-go@v5\n        with:\n          go-version: '1.22'`,java:`      - uses: actions/setup-java@v4\n        with:\n          distribution: 'temurin'\n          java-version: '21'`,rust:`      - uses: dtolnay/rust-toolchain@stable`};
+const langTest={node:`      - run: npm test`,python:`      - run: pytest`,go:`      - run: go test ./...`,java:`      - run: ./gradlew test`,rust:`      - run: cargo test`};
+const runnerMap={ubuntu:'ubuntu-latest',macos:'macos-latest',windows:'windows-latest'};
+function renderYaml(){
+  const {triggers,lang,runner,jobs,extras}=builderState;
+  const r=runnerMap[runner];
+  let y=`name: CI / CD Pipeline\n\non:\n`;
+  triggers.forEach(t=>{if(t==='push')y+=`  push:\n    branches: [main]\n`;else if(t==='pull_request')y+=`  pull_request:\n    branches: [main]\n`;else if(t==='schedule')y+=`  schedule:\n    - cron: '0 9 * * 1-5'\n`;else if(t==='dispatch')y+=`  workflow_dispatch:\n`;else if(t==='release')y+=`  release:\n    types: [created]\n`;});
+  y+=`\njobs:\n`;
+  const jobList=[...jobs];
+  const matrix=extras.has('matrix');
+  if(jobs.has('lint')){y+=`  lint:\n    runs-on: ${r}\n    steps:\n      - uses: actions/checkout@v4\n${langSetup[lang]}\n      - run: npm run lint\n\n`;}
+  if(jobs.has('test')){
+    if(matrix){y+=`  test:\n    strategy:\n      matrix:\n        node: [18, 20, 22]\n    runs-on: ${r}\n    steps:\n      - uses: actions/checkout@v4\n${langSetup[lang]}\n${langTest[lang]}\n\n`;}
+    else{y+=`  test:\n    runs-on: ${r}\n    steps:\n      - uses: actions/checkout@v4\n${langSetup[lang]}\n${langTest[lang]}\n\n`;}
+  }
+  if(jobs.has('security')){y+=`  security:\n    runs-on: ${r}\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm audit --audit-level=high\n\n`;}
+  if(jobs.has('build')){const needs=[...jobs].filter(j=>j!=='build'&&j!=='deploy'&&j!=='docker');y+=`  build:\n    runs-on: ${r}\n    needs: [${needs.join(', ')}]\n    steps:\n      - uses: actions/checkout@v4\n${langSetup[lang]}\n      - run: npm run build\n`+  (extras.has('artifact')?`      - uses: actions/upload-artifact@v4\n        with:\n          name: dist\n          path: dist/\n`:'') +`\n`;}
+  if(jobs.has('docker')){y+=`  docker:\n    runs-on: ${r}\n    needs: [${[...jobs].filter(j=>j==='build'||j==='test').join(', ')||'build'}]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: docker/login-action@v3\n        with:\n          registry: ghcr.io\n          username: \${{ github.actor }}\n          password: \${{ secrets.GITHUB_TOKEN }}\n      - uses: docker/build-push-action@v5\n        with:\n          push: true\n          tags: ghcr.io/\${{ github.repository }}:\${{ github.sha }}\n\n`;}
+  if(jobs.has('deploy')){y+=`  deploy:\n    runs-on: ${r}\n    needs: [${jobs.has('build')?'build':jobs.has('test')?'test':'lint'}]\n    if: github.ref == 'refs/heads/main'\n    environment: production\n    steps:\n      - uses: actions/checkout@v4\n      - uses: amondnet/vercel-action@v25\n        with:\n          vercel-token: \${{ secrets.VERCEL_TOKEN }}\n          vercel-org-id: \${{ secrets.VERCEL_ORG_ID }}\n          vercel-project-id: \${{ secrets.VERCEL_PROJECT_ID }}\n          vercel-args: '--prod'\n\n`;}
+  if(extras.has('slack')){y+=`  notify:\n    runs-on: ${r}\n    needs: [${[...jobs].pop()||'test'}]\n    if: always()\n    steps:\n      - uses: rtCamp/action-slack-notify@v2\n        env:\n          SLACK_WEBHOOK: \${{ secrets.SLACK_WEBHOOK }}\n          SLACK_STATUS: \${{ job.status }}\n`;}
+  document.getElementById('ybout').textContent=y;
+}
+
+/* ── PIPELINE SIMULATOR ── */
+let pipeMode='pass';let pipeRunning=false;
+function setMode(m){pipeMode=m;document.getElementById('modepass').style.background=m==='pass'?'var(--gr-s)':'var(--bg3)';document.getElementById('modepass').style.color=m==='pass'?'var(--gr)':'var(--tx2)';document.getElementById('modefail').style.background=m==='fail'?'var(--red-s)':'var(--bg3)';document.getElementById('modefail').style.color=m==='fail'?'var(--red)':'var(--tx2)';}
+function addLog(msg,col='var(--tx2)'){const l=document.getElementById('pllog');const d=document.createElement('div');d.style.color=col;d.innerHTML=msg;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+async function runPipeline(){
+  if(pipeRunning)return;pipeRunning=true;
+  document.getElementById('plrunbtn').disabled=true;
+  document.getElementById('pllog').innerHTML='';
+  for(let i=0;i<5;i++){document.getElementById('pli'+i).className='plsicon';document.getElementById('plt'+i).textContent='–';document.getElementById('sep'+i)?.classList.remove('active');}
+  document.getElementById('plstatus').innerHTML='Running · commit <code style="color:var(--gr)">4f2a1b3</code> → main';
+  const stages=[
+    {name:'Lint',logs:['Checking out repository...','Setting up Node.js 20...','Installing dependencies (cached)...','Running ESLint...','✓ No lint errors found','✓ Prettier format check passed'],time:'23s',fail:false},
+    {name:'Test',logs:['Checking out repository...','Setting up Node.js 20...','Running Jest...','PASS src/sum.test.js','PASS src/auth.test.js','Coverage: 94%',...(pipeMode==='fail'?['FAIL src/api.test.js','✗ Expected 200 got 404']:['PASS src/api.test.js','✓ All 42 tests passed'])],time:pipeMode==='fail'?'31s (FAILED)':'31s',fail:pipeMode==='fail'},
+    {name:'Security',logs:['Running npm audit...','Checked 847 packages','0 critical vulnerabilities','2 moderate (acceptable)','✓ Security check passed'],time:'12s',fail:false},
+    {name:'Build',logs:['Checking out repository...','Running npm run build...','Building for production...','✓ Build complete (dist/ 2.4MB)','Uploading artifact dist-4f2a1b3...','✓ Artifact uploaded'],time:'1m 02s',fail:false},
+    {name:'Deploy',logs:['Checking out repository...','Deploying to Vercel production...','✓ Deployment URL: https://app.vercel.app','✓ Deployment complete!'],time:'45s',fail:false}
+  ];
+  for(let i=0;i<stages.length;i++){
+    const s=stages[i];
+    document.getElementById('pli'+i).classList.add('running');
+    addLog(`\n<span style="color:var(--sky)">▶ [Job ${i+1}/5] ${s.name}</span>`);
+    for(const log of s.logs){await delay(220);addLog(`  ${log}`,s.fail&&log.startsWith('FAIL')?'var(--red)':log.includes('✓')||log.includes('PASS')?'var(--gr)':'var(--tx2)');}
+    await delay(300);
+    document.getElementById('pli'+i).classList.remove('running');
+    if(s.fail){document.getElementById('pli'+i).classList.add('fail');document.getElementById('plt'+i).textContent=s.time;addLog(`  ✗ ${s.name} FAILED`,'var(--red)');document.getElementById('plstatus').innerHTML='<span style="color:var(--red)">✗ Pipeline failed</span> · '+ s.name +' job failed';document.getElementById('plrunbtn').disabled=false;pipeRunning=false;return;}
+    document.getElementById('pli'+i).classList.add('ok');document.getElementById('plt'+i).textContent=s.time;if(i<4)document.getElementById('sep'+i)?.classList.add('active');
+  }
+  document.getElementById('plstatus').innerHTML='<span style="color:var(--gr)">✓ All jobs passed</span> · deployed to production';
+  addLog('\n✓ Pipeline complete! Deployed to https://app.vercel.app','var(--gr)');
+  document.getElementById('plrunbtn').disabled=false;pipeRunning=false;
+}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ── MATRIX BUILD ── */
+function runMatrix(withFail){resetMatrix();const failIdx=withFail?Math.floor(Math.random()*9):-1;for(let i=0;i<9;i++){const offset=Math.random()*1200;setTimeout(()=>{document.getElementById('mx'+i).classList.add('run');document.getElementById('mxs'+i).textContent='running...';document.getElementById('mxs'+i).style.color='var(--sky)';},offset);setTimeout(()=>{document.getElementById('mx'+i).classList.remove('run');const fail=i===failIdx;document.getElementById('mx'+i).classList.add(fail?'fail':'ok');document.getElementById('mxs'+i).textContent=fail?'✗ FAILED':'✓ passed';document.getElementById('mxs'+i).style.color=fail?'var(--red)':'var(--gr)';},offset+1500+Math.random()*800);}}
+function resetMatrix(){for(let i=0;i<9;i++){const el=document.getElementById('mx'+i);el.classList.remove('ok','fail','run');const st=document.getElementById('mxs'+i);st.textContent='–';st.style.color='var(--tx3)';}}
+
+/* ── INIT ── */
+renderYaml();
+</script>
+</body>
+</html>
