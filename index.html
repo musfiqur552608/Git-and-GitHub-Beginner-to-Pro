@@ -819,18 +819,125 @@ main {
   .state-arrow { flex-direction: row; }
   .arrow-line { width: 20px; }
 }
+
+/* Shared shell */
+:root {
+  --bg: #0b0f14;
+  --bg2: #111823;
+  --bg3: #171f2d;
+  --bg4: #1f293a;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e5e9f0;
+  --text2: #a0a9b8;
+  --text3: #6b7486;
+  --accent: #2dd4bf;
+  --accent-soft: rgba(45,212,191,0.16);
+  --or: var(--accent);
+  --or2: #55e0cb;
+  --or-soft: var(--accent-soft);
+  --or-glow: rgba(45,212,191,0.12);
+  --blue: var(--accent);
+  --blue-s: var(--accent-soft);
+  --blue-b: rgba(45,212,191,0.28);
+  --purple: #60a5fa;
+  --purple-s: rgba(96,165,250,0.14);
+  --green: #4ade80;
+  --green-s: rgba(74,222,128,0.12);
+  --yellow: #facc15;
+  --yellow-s: rgba(250,204,21,0.14);
+  --red: #f87171;
+  --red-s: rgba(248,113,113,0.14);
+  --teal: var(--accent);
+  --teal-s: var(--accent-soft);
+  --pink: #fb7185;
+  --pink-s: rgba(251,113,133,0.14);
+  --gold: #fbbf24;
+  --gold-s: rgba(251,191,36,0.14);
+  --grn: var(--green);
+  --grn-s: var(--green-s);
+  --sky: #38bdf8;
+  --sky-s: rgba(56,189,248,0.14);
+  --bd: var(--border);
+  --bd2: var(--border2);
+  --tx: var(--text);
+  --tx2: var(--text2);
+  --tx3: var(--text3);
+  --header-h: 56px;
+  --sidebar-w: 260px;
+  --hh: 56px;
+  --sw: 260px;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--mono); }
+header {
+  height: var(--header-h);
+  background: rgba(11,15,20,0.92);
+  border-bottom: 0.5px solid var(--border);
+}
+.header-brand, .hbrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.brand-icon, .hlogo, .hico {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #7dd3fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.brand-icon svg { width: 16px; height: 16px; fill: white; }
+.brand-name, .hname { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.02em; }
+.brand-name span, .hname span, .hname em { color: var(--accent); font-style: normal; }
+.top-nav { display: flex; gap: 8px; align-items: center; margin-left: 1rem; }
+.top-nav .nav-link {
+  color: var(--text2);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 0.5px solid transparent;
+}
+.top-nav .nav-link:hover { background: var(--bg3); color: var(--text); }
+.top-nav .nav-link.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+aside { background: var(--bg); border-right: 0.5px solid var(--border); }
+.sidebar-label, .slabel, .sg {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.nav-item, .sitem, .si { color: var(--text2); border-radius: 8px; }
+.nav-item:hover, .sitem:hover, .si:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active, .sitem.active, .si.on { background: var(--accent-soft); color: var(--accent); }
+.nav-item.done, .sitem.done, .si.dn { color: var(--green); }
+.nav-num, .snum, .sn { background: var(--bg3); color: var(--text3); }
+.nav-item.active .nav-num, .sitem.active .snum, .si.on .sn { background: var(--accent-soft); color: var(--accent); }
+.nav-item.done .nav-num, .sitem.done .snum, .si.dn .sn { background: var(--green-s); color: var(--green); }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header>
-  <a class="header-brand" href="#">
+  <a class="header-brand" href="index.html">
     <div class="brand-icon">
       <svg viewBox="0 0 24 24"><path d="M15 3l3.3 3.3-1.8 1.8L15 7l-1.5 1.5L17 12l-4.5 4.5L9 13 6 16l-3-3L15 3zm-3 16.5L7.5 15 9 13.5l4.5 4.5L12 19.5z"/></svg>
     </div>
     <span class="brand-name"><span>git</span> / phase-1</span>
   </a>
+  <nav class="top-nav">
+    <a class="nav-link active" href="index.html">Home</a>
+    <a class="nav-link" href="git-phase2-branching.html">Phase 2</a>
+    <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
+  </nav>
   <div class="header-sep"></div>
   <div class="header-pills">
     <span class="hpill active">foundation</span>
@@ -845,28 +952,23 @@ main {
 
   <!-- SIDEBAR -->
   <aside>
-    <a class="hbrand" href="index.html">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2L2 7v7c0 5 4 9 10 9s10-4 10-9V7l-10-5z"/></svg>
-      </div>
-      <span class="brand-name"><span>git</span> / phase-1</span>
-    </a>
-    <nav class="top-nav">
-      <a class="nav-link active" href="index.html">Home</a>
-      <a class="nav-link" href="git-phase2-branching.html">Phase 2</a>
-      <a class="nav-link" href="git-phase3-github.html">Phase 3</a>
-    </nav>
-    <div class="header-sep"></div>
-    <div class="header-pills">
-      <div class="hpill">Begin</div>
-      <div class="hpill active">Overview</div>
-    </div>
+    <div class="sidebar-label">lessons</div>
+    <div class="sidebar-section">
+      <button class="nav-item active" onclick="showLesson(0)" id="nav0">
+        <span class="nav-num">1</span>
+        <span class="nav-text">what is git?</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(1)" id="nav1">
+        <span class="nav-num">2</span>
+        <span class="nav-text">install &amp; config</span>
+      </button>
+      <button class="nav-item" onclick="showLesson(2)" id="nav2">
         <span class="nav-num">3</span>
         <span class="nav-text">init, clone &amp; working dir</span>
       </button>
       <button class="nav-item" onclick="showLesson(3)" id="nav3">
         <span class="nav-num">4</span>
-        <span class="nav-text">The 3 States</span>
+        <span class="nav-text">the 3 states</span>
       </button>
       <button class="nav-item" onclick="showLesson(4)" id="nav4">
         <span class="nav-num">5</span>
@@ -882,11 +984,11 @@ main {
     <div class="sidebar-section">
       <button class="nav-item" onclick="showLesson(6)" id="nav6">
         <span class="nav-num" style="background:var(--or-soft);color:var(--or)">✦</span>
-        <span class="nav-text">Terminal sandbox</span>
+        <span class="nav-text">terminal sandbox</span>
       </button>
       <button class="nav-item" onclick="showLesson(7)" id="nav7">
         <span class="nav-num" style="background:var(--or-soft);color:var(--or)">✦</span>
-        <span class="nav-text">Quick-reference</span>
+        <span class="nav-text">quick reference</span>
       </button>
     </div>
 
@@ -1934,7 +2036,7 @@ a1b2c3d initial commit</span>
 
       <div class="lesson-nav">
         <button class="btn-secondary" onclick="showLesson(6)">← Terminal</button>
-        <button class="btn-primary" onclick="sendPrompt('Take me to Phase 2 of Git — Branching and Merging')">Phase 2: Branching ↗</button>
+        <button class="btn-primary" onclick="location.href='git-phase2-branching.html'">Phase 2: Branching ↗</button>
       </div>
     </section>
 

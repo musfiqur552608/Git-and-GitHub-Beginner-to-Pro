@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Git Phase 3 — GitHub & Remotes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -291,6 +291,108 @@ main{margin-left:var(--sw);flex:1;max-width:920px;padding:2.5rem 2.5rem 5rem}
   .wfsteps{grid-template-columns:1fr 1fr}
   .wfstep::after{display:none}
 }
+
+/* Shared shell */
+:root {
+  --bg: #0b0f14;
+  --bg2: #111823;
+  --bg3: #171f2d;
+  --bg4: #1f293a;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e5e9f0;
+  --text2: #a0a9b8;
+  --text3: #6b7486;
+  --accent: #2dd4bf;
+  --accent-soft: rgba(45,212,191,0.16);
+  --or: var(--accent);
+  --or2: #55e0cb;
+  --or-soft: var(--accent-soft);
+  --or-glow: rgba(45,212,191,0.12);
+  --blue: var(--accent);
+  --blue-s: var(--accent-soft);
+  --blue-b: rgba(45,212,191,0.28);
+  --purple: #60a5fa;
+  --purple-s: rgba(96,165,250,0.14);
+  --green: #4ade80;
+  --green-s: rgba(74,222,128,0.12);
+  --yellow: #facc15;
+  --yellow-s: rgba(250,204,21,0.14);
+  --red: #f87171;
+  --red-s: rgba(248,113,113,0.14);
+  --teal: var(--accent);
+  --teal-s: var(--accent-soft);
+  --pink: #fb7185;
+  --pink-s: rgba(251,113,133,0.14);
+  --gold: #fbbf24;
+  --gold-s: rgba(251,191,36,0.14);
+  --grn: var(--green);
+  --grn-s: var(--green-s);
+  --sky: #38bdf8;
+  --sky-s: rgba(56,189,248,0.14);
+  --bd: var(--border);
+  --bd2: var(--border2);
+  --tx: var(--text);
+  --tx2: var(--text2);
+  --tx3: var(--text3);
+  --header-h: 56px;
+  --sidebar-w: 260px;
+  --hh: 56px;
+  --sw: 260px;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--mono); }
+header {
+  height: var(--header-h);
+  background: rgba(11,15,20,0.92);
+  border-bottom: 0.5px solid var(--border);
+}
+.header-brand, .hbrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.brand-icon, .hlogo, .hico {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #7dd3fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.brand-icon svg { width: 16px; height: 16px; fill: white; }
+.brand-name, .hname { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.02em; }
+.brand-name span, .hname span, .hname em { color: var(--accent); font-style: normal; }
+.top-nav { display: flex; gap: 8px; align-items: center; margin-left: 1rem; }
+.top-nav .nav-link {
+  color: var(--text2);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 0.5px solid transparent;
+}
+.top-nav .nav-link:hover { background: var(--bg3); color: var(--text); }
+.top-nav .nav-link.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+aside { background: var(--bg); border-right: 0.5px solid var(--border); }
+.sidebar-label, .slabel, .sg {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.nav-item, .sitem, .si { color: var(--text2); border-radius: 8px; }
+.nav-item:hover, .sitem:hover, .si:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active, .sitem.active, .si.on { background: var(--accent-soft); color: var(--accent); }
+.nav-item.done, .sitem.done, .si.dn { color: var(--green); }
+.nav-num, .snum, .sn { background: var(--bg3); color: var(--text3); }
+.nav-item.active .nav-num, .sitem.active .snum, .si.on .sn { background: var(--accent-soft); color: var(--accent); }
+.nav-item.done .nav-num, .sitem.done .snum, .si.dn .sn { background: var(--green-s); color: var(--green); }
 </style>
 </head>
 <body>
