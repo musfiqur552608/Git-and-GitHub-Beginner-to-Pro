@@ -2053,6 +2053,49 @@ let currentLesson = 0;
 const totalLessons = 6;
 const completedLessons = new Set();
 const completedExercises = new Set();
+const STORAGE_KEY = 'git-course:phase1';
+
+function saveProgress() {
+  try {
+    const payload = {
+      doneLessons: [...completedLessons],
+      doneExercises: [...completedExercises],
+      current: currentLesson,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    /* no-op: localStorage may be unavailable */
+  }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.doneLessons)) {
+      data.doneLessons.forEach((n) => {
+        if (!Number.isInteger(n)) return;
+        completedLessons.add(n);
+        const nav = document.getElementById('nav' + n);
+        if (nav) nav.classList.add('done');
+      });
+    }
+    if (Array.isArray(data.doneExercises)) {
+      data.doneExercises.forEach((id) => {
+        if (typeof id !== 'string') return;
+        const card = document.getElementById(id);
+        if (card) {
+          card.classList.add('completed');
+          completedExercises.add(id);
+        }
+      });
+    }
+    if (Number.isInteger(data.current)) currentLesson = data.current;
+  } catch (err) {
+    /* no-op: invalid saved data */
+  }
+}
 
 /* ── NAVIGATION ──────────────────────────────────────────── */
 function showLesson(n) {
@@ -2062,6 +2105,7 @@ function showLesson(n) {
   document.getElementById('nav' + n).classList.add('active');
   currentLesson = n;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  saveProgress();
 }
 
 function nextLesson(n) {
@@ -2069,6 +2113,7 @@ function nextLesson(n) {
   document.getElementById('nav' + n).classList.add('done');
   updateProgress();
   showLesson(n + 1);
+  saveProgress();
 }
 
 function prevLesson(n) { showLesson(n - 1); }
@@ -2097,6 +2142,7 @@ function markDone(e, id) {
   } else {
     completedExercises.delete(id);
   }
+  saveProgress();
 }
 
 /* ── QUIZ ─────────────────────────────────────────────────── */
@@ -2344,7 +2390,9 @@ function copyCode(btn) {
 
 /* ── INIT ────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
+  loadProgress();
   updateProgress();
+  showLesson(currentLesson);
   document.getElementById('termInput').focus();
 });
 </script>

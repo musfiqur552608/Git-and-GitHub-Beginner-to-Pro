@@ -1452,12 +1452,57 @@ The issue was a CSS `pointer-events: none` applied too broadly.</span>
 <script>
 /* ── NAV ── */
 let cur=0; const total=6; const doneSet=new Set();
+const doneExercises = new Set();
+const STORAGE_KEY = 'git-course:phase3';
+
+function saveProgress() {
+  try {
+    const payload = {
+      doneLessons: [...doneSet],
+      doneExercises: [...doneExercises],
+      current: cur,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    /* no-op */
+  }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.doneLessons)) {
+      data.doneLessons.forEach((n) => {
+        if (!Number.isInteger(n)) return;
+        doneSet.add(n);
+        const nav = document.getElementById('n' + n);
+        if (nav) nav.classList.add('dn');
+      });
+    }
+    if (Array.isArray(data.doneExercises)) {
+      data.doneExercises.forEach((id) => {
+        if (typeof id !== 'string') return;
+        const card = document.getElementById(id);
+        if (card) {
+          card.classList.add('dn');
+          doneExercises.add(id);
+        }
+      });
+    }
+    if (Number.isInteger(data.current)) cur = data.current;
+  } catch (err) {
+    /* no-op */
+  }
+}
 function go(n){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));
   document.getElementById('s'+n).classList.add('on');
   document.getElementById('n'+n).classList.add('on');
   cur=n; window.scrollTo({top:0,behavior:'smooth'});
+  saveProgress();
 }
 function nxt(n){doneSet.add(n);document.getElementById('n'+n).classList.add('dn');upProg();go(n+1);}
 function prv(n){go(n-1);}
@@ -1471,7 +1516,13 @@ function gophase4(){alert('Phase 4: GitHub Actions & CI/CD — open git-phase4-a
 
 /* ── EXERCISE ── */
 function tog(h){const b=h.nextElementSibling;const o=b.classList.contains('open');b.classList.toggle('open',!o);h.setAttribute('aria-expanded',!o);}
-function mkdn(e,id){e.stopPropagation();document.getElementById(id).classList.toggle('dn');}
+function mkdn(e,id){
+  e.stopPropagation();
+  const card=document.getElementById(id);
+  card.classList.toggle('dn');
+  if(card.classList.contains('dn')){doneExercises.add(id);}else{doneExercises.delete(id);}
+  saveProgress();
+}
 
 /* ── COPY ── */
 function cp(btn){
@@ -1590,6 +1641,11 @@ function simCli(cmd){
   if(t==='clear')return null;
   return`<span style="color:var(--red)">command not recognized. Type 'help' for available commands.</span>`;
 }
+
+/* ── INIT ── */
+loadProgress();
+upProg();
+go(cur);
 </script>
 </body>
 </html>

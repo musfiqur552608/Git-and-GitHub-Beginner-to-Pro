@@ -1365,6 +1365,50 @@ Changes not staged for commit:
 let cur = 0;
 const total = 6;
 const done_ = new Set();
+const doneExercises = new Set();
+const STORAGE_KEY = 'git-course:phase2';
+
+function saveProgress() {
+  try {
+    const payload = {
+      doneLessons: [...done_],
+      doneExercises: [...doneExercises],
+      current: cur,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    /* no-op */
+  }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.doneLessons)) {
+      data.doneLessons.forEach((n) => {
+        if (!Number.isInteger(n)) return;
+        done_.add(n);
+        const nav = document.getElementById('n' + n);
+        if (nav) nav.classList.add('done');
+      });
+    }
+    if (Array.isArray(data.doneExercises)) {
+      data.doneExercises.forEach((id) => {
+        if (typeof id !== 'string') return;
+        const card = document.getElementById(id);
+        if (card) {
+          card.classList.add('done');
+          doneExercises.add(id);
+        }
+      });
+    }
+    if (Number.isInteger(data.current)) cur = data.current;
+  } catch (err) {
+    /* no-op */
+  }
+}
 
 function go(n) {
   document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
@@ -1374,12 +1418,14 @@ function go(n) {
   cur = n;
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (n === 6) setTimeout(initViz, 100);
+  saveProgress();
 }
 function next(n) {
   done_.add(n);
   document.getElementById('n' + n).classList.add('done');
   updateProg();
   go(n + 1);
+  saveProgress();
 }
 function prev(n) { go(n - 1); }
 function updateProg() {
@@ -1399,7 +1445,14 @@ function tog(header) {
 }
 function done(e, id) {
   e.stopPropagation();
-  document.getElementById(id).classList.toggle('done');
+  const card = document.getElementById(id);
+  card.classList.toggle('done');
+  if (card.classList.contains('done')) {
+    doneExercises.add(id);
+  } else {
+    doneExercises.delete(id);
+  }
+  saveProgress();
 }
 
 /* ── QUIZ ── */
@@ -1679,6 +1732,9 @@ function showViz(n) {
 
 /* ── INIT ── */
 renderStash();
+loadProgress();
+updateProg();
+go(cur);
 </script>
 </body>
 </html>

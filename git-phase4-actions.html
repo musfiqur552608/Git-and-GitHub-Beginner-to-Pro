@@ -1262,7 +1262,40 @@ main{margin-left:var(--sw);flex:1;width:calc(100% - var(--sw));max-width:none;pa
 <script>
 /* ── NAV ── */
 let cur=0;const total=6;const doneSet=new Set();
-function go(n){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));document.getElementById('s'+n).classList.add('on');document.getElementById('n'+n).classList.add('on');cur=n;window.scrollTo({top:0,behavior:'smooth'});if(n===6)renderYaml();}
+const doneExercises=new Set();
+const STORAGE_KEY='git-course:phase4';
+
+function saveProgress(){
+  try{
+    const payload={doneLessons:[...doneSet],doneExercises:[...doneExercises],current:cur};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
+  }catch(err){/* no-op */}
+}
+
+function loadProgress(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(Array.isArray(data.doneLessons)){
+      data.doneLessons.forEach((n)=>{
+        if(!Number.isInteger(n))return;
+        doneSet.add(n);
+        const nav=document.getElementById('n'+n);
+        if(nav)nav.classList.add('dn');
+      });
+    }
+    if(Array.isArray(data.doneExercises)){
+      data.doneExercises.forEach((id)=>{
+        if(typeof id!=='string')return;
+        const card=document.getElementById(id);
+        if(card){card.classList.add('dn');doneExercises.add(id);}
+      });
+    }
+    if(Number.isInteger(data.current))cur=data.current;
+  }catch(err){/* no-op */}
+}
+function go(n){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.si').forEach(b=>b.classList.remove('on'));document.getElementById('s'+n).classList.add('on');document.getElementById('n'+n).classList.add('on');cur=n;window.scrollTo({top:0,behavior:'smooth'});if(n===6)renderYaml();saveProgress();}
 function nxt(n){doneSet.add(n);document.getElementById('n'+n).classList.add('dn');upProg();go(n+1);}
 function prv(n){go(n-1);}
 function upProg(){const p=Math.round((doneSet.size/total)*100);document.getElementById('gp').style.width=p+'%';document.getElementById('spf').style.width=p+'%';document.getElementById('ptxt').textContent=doneSet.size+' / '+total;}
@@ -1270,7 +1303,7 @@ function goPhase5(){alert('Phase 5: Expert & Open Source — open git-phase5-exp
 
 /* ── EXERCISE ── */
 function tog(h){const b=h.nextElementSibling;const o=b.classList.contains('open');b.classList.toggle('open',!o);h.setAttribute('aria-expanded',!o);}
-function mkdn(e,id){e.stopPropagation();document.getElementById(id).classList.toggle('dn');}
+function mkdn(e,id){e.stopPropagation();const card=document.getElementById(id);card.classList.toggle('dn');if(card.classList.contains('dn')){doneExercises.add(id);}else{doneExercises.delete(id);}saveProgress();}
 
 /* ── COPY ── */
 function cp(btn){const text=btn.closest('.code').querySelector('.codeb').innerText;navigator.clipboard.writeText(text.replace(/^\$ /gm,'').trim()).then(()=>{btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1600);});}
@@ -1358,6 +1391,9 @@ function runMatrix(withFail){resetMatrix();const failIdx=withFail?Math.floor(Mat
 function resetMatrix(){for(let i=0;i<9;i++){const el=document.getElementById('mx'+i);el.classList.remove('ok','fail','run');const st=document.getElementById('mxs'+i);st.textContent='–';st.style.color='var(--tx3)';}}
 
 /* ── INIT ── */
+loadProgress();
+upProg();
+go(cur);
 renderYaml();
 </script>
 </body>
