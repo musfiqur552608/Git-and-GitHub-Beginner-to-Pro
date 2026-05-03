@@ -379,7 +379,12 @@ header {
 }
 .top-nav .nav-link:hover { background: var(--bg3); color: var(--text); }
 .top-nav .nav-link.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
-aside { background: var(--bg); border-right: 0.5px solid var(--border); }
+aside {
+  background: var(--bg);
+  border-right: 0.5px solid var(--border);
+  top: calc(var(--header-h) + 2px);
+  padding: 0.5rem 0 2rem;
+}
 .sidebar-label, .slabel, .sg {
   font-size: 9px;
   letter-spacing: 0.14em;
